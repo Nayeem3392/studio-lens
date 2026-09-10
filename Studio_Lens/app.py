@@ -379,9 +379,29 @@ def get_recommendations(results):
 
     return recs
 
-# ---------- Download Function for Remote URL ----------
+# ---------- Link Inspector & Downloader ----------
+def get_link_info(url):
+    try:
+        import yt_dlp
+    except ImportError:
+        return None, "yt-dlp is not installed."
+    ydl_opts = {'quiet': True, 'no_warnings': True, 'skip_download': True, 'socket_timeout': 15, 'nocheckcertificate': True}
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            if not info: return None, "Could not extract information."
+            return {
+                'title': info.get('title', 'Unknown Title'),
+                'uploader': info.get('uploader', info.get('channel', 'Unknown')),
+                'duration': info.get('duration', 0) or 0,
+                'view_count': info.get('view_count', 0) or 0,
+                'thumbnail': info.get('thumbnail', ''),
+                'extractor': info.get('extractor', 'Unknown'),
+            }, None
+    except Exception as e:
+        return None, str(e)
+
 def download_video_from_url(url, output_dir):
-    """Download video using yt-dlp. Returns (filepath, error)."""
     try:
         import yt_dlp
     except ImportError:
@@ -392,12 +412,7 @@ def download_video_from_url(url, output_dir):
         'format': 'bv*+ba/b',
         'quiet': True,
         'no_warnings': True,
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['tv', 'android', 'web_safari'],
-                'player_skip': ['webpage'],
-            }
-        },
+        'extractor_args': {'youtube': {'player_client': ['tv', 'android', 'web_safari'], 'player_skip': ['webpage']}},
         'impersonate': 'chrome',
         'source_address': '0.0.0.0',
         'nocheckcertificate': True,
@@ -407,11 +422,9 @@ def download_video_from_url(url, output_dir):
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            if not info:
-                return None, "Failed to extract video info (empty response)."
+            if not info: return None, "Failed to extract video info."
             filepath = ydl.prepare_filename(info)
-            if not filepath:
-                return None, "Failed to determine output filename."
+            if not filepath: return None, "Failed to determine filename."
             return filepath, None
     except Exception as e:
         return None, str(e)
@@ -542,45 +555,78 @@ with tab_url:
         if not video_url:
             st.warning("Please paste a link first.")
         else:
-            temp_dir = tempfile.gettempdir()
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-
-            status_text.text("Downloading video...")
-            progress_bar.progress(0.1)
-
-            filepath, error = download_video_from_url(video_url, temp_dir)
-
-            if error:
-                progress_bar.empty()
-                status_text.empty()
-                st.error(f"Download failed: {error}")
-                st.info("💡 **Tip:** If this is a YouTube link, YouTube is blocking the cloud server. Please download the video and use the **Local Analysis** tab.")
-            elif filepath is None:
-                progress_bar.empty()
-                status_text.empty()
-                st.error("Download failed silently. Please check the URL and try again.")
-            else:
-                st.success(f"✓ Downloaded: {os.path.basename(filepath)}")
-                st.session_state['video_path'] = filepath
-                st.session_state['video_name'] = os.path.basename(filepath)
-
-                # Run full analysis
-                def update_progress(value, text):
-                    progress_bar.progress(value)
-                    status_text.text(text)
-
-                with st.spinner("Analyzing..."):
-                    results = analyze_video(filepath, update_progress)
-
-                progress_bar.empty()
-                status_text.empty()
-
-                if results is None:
-                    st.error("Could not analyze the downloaded video. The file may be corrupt.")
+            # Check if it's a YouTube link
+            is_youtube = "youtube.com" in video_url or "youtu.be" in video_url
+            
+            if is_youtube:
+                st.info("🔍 YouTube detected. Fetching metadata (inspection only)...")
+                info, error = get_link_info(video_url)
+                if error:
+                    st.error(f"YouTube blocked the request: {error}")
+                    st.info("💡 **Solution:** Please download the video to your computer and use the **Local Analysis** tab for the full frame-by-frame breakdown.")
                 else:
-                    st.session_state['analysis_results'] = results
-                    st.rerun()
+                    st.success("✓ Metadata extracted!")
+                    col_thumb, col_info = st.columns([1, 2])
+                    with col_thumb:
+                        if info['thumbnail']:
+                            st.image(info['thumbnail'], use_container_width=True)
+                    with col_info:
+                        st.markdown(f"### {info['title']}")
+                        st.markdown(f"**Channel:** {info['uploader']}")
+                        duration_str = f"{int(info['duration'] // 60)}m {int(info['duration'] % 60)}s" if info['duration'] else "N/A"
+                        st.markdown(f"**Duration:** {duration_str}")
+                        st.markdown(f"**Views:** {info['view_count']:,}" if info['view_count'] else "**Views:** N/A")
+                    
+                    st.divider()
+                    st.markdown("### 💡 What to Look For in This Video")
+                    st.markdown("""
+                    - **Color Grading:** Warm, cool, or cinematic tone? Look at shadows vs. highlights.
+                    - **Transitions:** Hard cuts, fades, zooms, or slides?
+                    - **Camera Motion:** Static, panning, tilting, or gimbal movement?
+                    - **Text Overlays:** Titles, subtitles, or kinetic typography?
+                    - **Music & Audio:** Fast, slow, or moderate? Voiceover or dialogue?
+                    - **Pacing:** Fast-paced or slow and deliberate?
+                    """)
+                    st.info("💡 **To get the full automated frame analysis:** Download this video to your computer and upload it in the **Local Analysis** tab.")
+            else:
+                # Non-YouTube URL: attempt download and full analysis
+                temp_dir = tempfile.gettempdir()
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+
+                status_text.text("Downloading video...")
+                progress_bar.progress(0.1)
+
+                filepath, error = download_video_from_url(video_url, temp_dir)
+
+                if error:
+                    progress_bar.empty()
+                    status_text.empty()
+                    st.error(f"Download failed: {error}")
+                elif filepath is None:
+                    progress_bar.empty()
+                    status_text.empty()
+                    st.error("Download failed silently. Please check the URL.")
+                else:
+                    st.success(f"✓ Downloaded: {os.path.basename(filepath)}")
+                    st.session_state['video_path'] = filepath
+                    st.session_state['video_name'] = os.path.basename(filepath)
+
+                    def update_progress(value, text):
+                        progress_bar.progress(value)
+                        status_text.text(text)
+
+                    with st.spinner("Analyzing..."):
+                        results = analyze_video(filepath, update_progress)
+
+                    progress_bar.empty()
+                    status_text.empty()
+
+                    if results is None:
+                        st.error("Could not analyze the downloaded video.")
+                    else:
+                        st.session_state['analysis_results'] = results
+                        st.rerun()
 
 # ============================================================
 # RESULTS DISPLAY (Shared by both tabs)
