@@ -8,12 +8,7 @@ import subprocess
 import pandas as pd
 import time
 import base64
-import shutil
-
-try:
-    import imageio_ffmpeg
-except ModuleNotFoundError:
-    imageio_ffmpeg = None
+import imageio_ffmpeg
 
 # ---------- PAGE CONFIG (MUST BE FIRST) ----------
 st.set_page_config(
@@ -26,13 +21,13 @@ st.set_page_config(
 # ---------- PERMANENT IMAGE LOADING ----------
 current_dir = os.path.dirname(os.path.abspath(__file__))
 image_path = os.path.join(current_dir, "drone.png")
+COOKIES_PATH = os.path.join(current_dir, "cookies.txt")
 
 if os.path.exists(image_path):
     with open(image_path, "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode()
     drone_src = f"data:image/png;base64,{encoded_string}"
 else:
-    # Fallback: The cute ghost image you uploaded
     drone_src = "https://cdn-icons-png.flaticon.com/512/3588/3588920.png"
 
 # ---------- INJECT CINEMATIC DARK MODE UI ----------
@@ -338,27 +333,12 @@ st.markdown("""
 def extract_audio(video_path):
     temp_dir = tempfile.gettempdir()
     audio_path = os.path.join(temp_dir, "temp_audio.wav")
-    ffmpeg_exe = None
-
     try:
-        if imageio_ffmpeg is not None:
-            ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
-    except Exception:
-        ffmpeg_exe = None
-
-    if not ffmpeg_exe:
-        ffmpeg_exe = shutil.which("ffmpeg")
-
-    if not ffmpeg_exe:
-        print("Audio extraction failed: ffmpeg is not installed or not available on PATH.")
-        return None
-
-    try:
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
         subprocess.run(
             [ffmpeg_exe, '-i', video_path, '-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2', audio_path, '-y'],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True,
+            stderr=subprocess.DEVNULL
         )
     except Exception as e:
         print(f"Audio extraction failed: {str(e)}")
@@ -599,68 +579,52 @@ def answer_question(question, results=None):
     
     return f"I couldn't find a specific answer, but here are search links:\n🔗 [Google: '{question}']({google_search})\n🔗 [YouTube: '{question}']({yt_search})\n\nTry asking about: transitions, color grading, music, text, speed, effects, overlays, green screen, export, etc."
 
-import os
-
-# Path to your cookies file (will be in the same folder as app.py)
-COOKIES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
-
 def download_video_from_url(url, output_dir):
-    """
-    Download video using yt-dlp with cookies and player client escalation to bypass 403 errors.
-    """
+    """Download video using yt-dlp with cookies and player client escalation."""
     try:
         import yt_dlp
     except ImportError:
-        return None, "yt-dlp is not installed. Run `pip install yt-dlp` to enable link downloads."
+        return None, "yt-dlp is not installed."
 
-    # Check if cookies file exists
     if not os.path.exists(COOKIES_PATH):
         return None, "cookies.txt not found. Please export YouTube cookies and place them next to app.py."
 
-    # List of player clients to try, in order of reliability
-    player_clients = [
-        "tv",           # Often the most reliable
-        "android",      # Good fallback
-        "web_safari",   # Another fallback
-    ]
-
+    player_clients = ["tv", "android", "web_safari"]
     last_error = None
 
-    # Try each player client until one succeeds
     for client in player_clients:
         ydl_opts = {
             'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
-            'format': 'bv*+ba/b',  # Best video + best audio, or best combined
+            'format': 'bv*+ba/b',
             'quiet': True,
             'no_warnings': True,
-            'cookiefile': COOKIES_PATH,  # Use the exported cookies
+            'cookiefile': COOKIES_PATH,
             'extractor_args': {
                 'youtube': {
-                    'player_client': [client],  # Force a specific client
-                    'player_skip': ['webpage'],  # Skip fetching the webpage
+                    'player_client': [client],
+                    'player_skip': ['webpage'],
                 }
             },
-            # Impersonate a real browser to avoid TLS fingerprinting
             'impersonate': 'chrome',
-            # Force IPv4, as some IPv6 pools are more scrutinized[reference:3]
             'source_address': '0.0.0.0',
         }
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
+                if not info:
+                    return None, "Failed to extract video info (empty response)."
                 filepath = ydl.prepare_filename(info)
+                if not filepath:
+                    return None, "Failed to determine output filename."
                 return filepath, None  # Success!
         except Exception as e:
             last_error = e
-            # If this client fails with 403, try the next one
             if "403" in str(e) or "Forbidden" in str(e):
                 continue
             else:
-                # For other errors, break immediately
                 break
 
-    # If all clients failed, return the last error
     return None, str(last_error)
 
 # ---------- UI: Upload & Link Section ----------
@@ -672,7 +636,6 @@ with col_upload:
     with tab1:
         uploaded_file = st.file_uploader("", type=["mp4", "mov", "avi", "mkv"], label_visibility="collapsed")
         if uploaded_file is not None:
-            # Save the uploaded file object directly to session state
             st.session_state['uploaded_file_obj'] = uploaded_file
             st.session_state['video_name'] = uploaded_file.name
             st.success("✓ File ready for analysis. Click the button below.")
@@ -685,8 +648,11 @@ with col_upload:
                 with st.spinner("Downloading..."):
                     temp_dir = tempfile.gettempdir()
                     filepath, error = download_video_from_url(video_url, temp_dir)
+                    
                     if error:
                         st.error(f"Error: {error}")
+                    elif filepath is None: # THE CRITICAL FIX
+                        st.error("Download failed silently. Please check your cookies.txt file or try a different video.")
                     else:
                         st.success(f"Downloaded: {os.path.basename(filepath)}")
                         st.session_state['video_path'] = filepath
@@ -709,7 +675,6 @@ if 'uploaded_file_obj' in st.session_state or ('video_path' in st.session_state 
     with col_action:
         if st.button("▶ Run Full Analysis", use_container_width=True):
             
-            # Handle Local File Upload
             if 'uploaded_file_obj' in st.session_state:
                 uploaded_file = st.session_state['uploaded_file_obj']
                 temp_dir = tempfile.gettempdir()
@@ -718,7 +683,6 @@ if 'uploaded_file_obj' in st.session_state or ('video_path' in st.session_state 
                     f.write(uploaded_file.read())
                 st.session_state['video_path'] = video_path
             
-            # Retrieve path
             video_path = st.session_state['video_path']
             
             progress_bar = st.progress(0)
