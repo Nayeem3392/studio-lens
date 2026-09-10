@@ -37,14 +37,8 @@ else:
 # ---------- CINEMATIC DARK MODE UI ----------
 st.markdown("""
 <style>
-    /* ---- FORCE CINEMATIC DARK THEME ---- */
-    .stApp, body {
-        background-color: #0B1120 !important;
-        color: #F8FAFC !important;
-    }
-    h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stMetricValue {
-        color: #F8FAFC !important;
-    }
+    .stApp, body { background-color: #0B1120 !important; color: #F8FAFC !important; }
+    h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stMetricValue { color: #F8FAFC !important; }
     [data-testid="stFileUploader"] {
         background-color: #1E293B !important;
         border: 2px dashed #334155 !important;
@@ -52,242 +46,77 @@ st.markdown("""
         padding: 1.5rem !important;
         transition: all 0.3s ease;
     }
-    [data-testid="stFileUploader"]:hover {
-        border-color: #06B6D4 !important;
-        background-color: #0F172A !important;
-    }
+    [data-testid="stFileUploader"]:hover { border-color: #06B6D4 !important; background-color: #0F172A !important; }
     [data-testid="stFileUploader"] label { color: #94A3B8 !important; font-weight: 500 !important; }
     .uploadedFile { background-color: #0F172A !important; color: #F8FAFC !important; border-radius: 8px !important; }
     .stTextInput input {
-        background-color: #1E293B !important;
-        color: #F8FAFC !important;
-        border-radius: 12px !important;
-        border: 1px solid #334155 !important;
+        background-color: #1E293B !important; color: #F8FAFC !important;
+        border-radius: 12px !important; border: 1px solid #334155 !important;
     }
-    .stTextInput input:focus {
-        border-color: #06B6D4 !important;
-        box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2) !important;
-    }
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
+    .stTextInput input:focus { border-color: #06B6D4 !important; box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2) !important; }
+    #MainMenu {visibility: hidden;} header {visibility: hidden;} footer {visibility: hidden;}
 
-    /* ---- Navbar ---- */
     .navbar {
         position: fixed; top: 0; left: 0; width: 100%;
-        background: rgba(11, 17, 32, 0.85) !important;
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid #1E293B;
-        padding: 0.8rem 3rem;
-        z-index: 999;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-sizing: border-box;
+        background: rgba(11, 17, 32, 0.85) !important; backdrop-filter: blur(12px);
+        border-bottom: 1px solid #1E293B; padding: 0.8rem 3rem; z-index: 999;
+        display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;
     }
-    .nav-logo {
-        font-weight: 700; font-size: 1.3rem; letter-spacing: -0.03em;
-        color: #F8FAFC !important;
-        display: flex; align-items: center; gap: 8px;
-    }
+    .nav-logo { font-weight: 700; font-size: 1.3rem; letter-spacing: -0.03em; color: #F8FAFC !important; display: flex; align-items: center; gap: 8px; }
     .nav-logo span { color: #06B6D4 !important; }
     .nav-links { display: flex; gap: 2rem; align-items: center; }
-    .nav-links a {
-        text-decoration: none; color: #94A3B8 !important;
-        font-size: 0.9rem; font-weight: 500; transition: color 0.2s;
-    }
+    .nav-links a { text-decoration: none; color: #94A3B8 !important; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
     .nav-links a:hover { color: #F8FAFC !important; }
-    .nav-cta {
-        background: #1E293B; color: #06B6D4 !important;
-        padding: 0.4rem 1.2rem; border-radius: 40px;
-        font-weight: 600; font-size: 0.8rem;
-        border: 1px solid #334155;
-    }
+    .nav-cta { background: #1E293B; color: #06B6D4 !important; padding: 0.4rem 1.2rem; border-radius: 40px; font-weight: 600; font-size: 0.8rem; border: 1px solid #334155; }
 
-    /* ---- Hero ---- */
     .hero { margin-bottom: 2rem; position: relative; z-index: 10; padding-top: 80px; }
-    .hero h1 {
-        font-size: 3.5rem; font-weight: 800; letter-spacing: -0.04em;
-        color: #F8FAFC !important; margin-bottom: 0.5rem; line-height: 1.1;
-    }
-    .hero h1 span {
-        background: linear-gradient(135deg, #8B5CF6, #06B6D4);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
+    .hero h1 { font-size: 3.5rem; font-weight: 800; letter-spacing: -0.04em; color: #F8FAFC !important; margin-bottom: 0.5rem; line-height: 1.1; }
+    .hero h1 span { background: linear-gradient(135deg, #8B5CF6, #06B6D4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .hero p { font-size: 1.1rem; color: #94A3B8 !important; max-width: 700px; margin-top: 0; }
 
-    /* ---- Cards ---- */
     .glass-card {
-        background: #1E293B;
-        border: 1px solid #334155;
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        height: 100%;
+        background: #1E293B; border: 1px solid #334155; border-radius: 16px; padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); transition: transform 0.2s ease, box-shadow 0.2s ease; height: 100%;
     }
-    .glass-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.1);
-        border-color: #06B6D4;
-    }
-    .style-card {
-        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-        border: 1px solid #334155;
-        border-radius: 16px;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-    }
-    .style-card:hover {
-        border-color: #8B5CF6;
-        transform: translateX(4px);
-    }
+    .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.1); border-color: #06B6D4; }
+    .style-card { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border: 1px solid #334155; border-radius: 16px; padding: 1.2rem; margin-bottom: 1rem; transition: all 0.3s ease; }
+    .style-card:hover { border-color: #8B5CF6; transform: translateX(4px); }
     .style-title { font-size: 1.1rem; font-weight: 700; color: #06B6D4 !important; margin-bottom: 0.5rem; }
     .style-desc { font-size: 0.85rem; color: #94A3B8 !important; line-height: 1.5; }
-    .resource-card {
-        background: #1E293B;
-        border-left: 3px solid #06B6D4;
-        border-radius: 8px;
-        padding: 1rem 1.2rem;
-        margin-bottom: 0.8rem;
-    }
-    .resource-card a {
-        color: #06B6D4 !important;
-        text-decoration: none;
-        font-weight: 600;
-    }
+    .resource-card { background: #1E293B; border-left: 3px solid #06B6D4; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 0.8rem; }
+    .resource-card a { color: #06B6D4 !important; text-decoration: none; font-weight: 600; }
     .resource-card a:hover { text-decoration: underline; }
 
-    /* ---- Buttons ---- */
     .stButton button {
-        background: linear-gradient(135deg, #8B5CF6, #06B6D4) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 0.6rem 1.8rem !important;
-        font-weight: 600 !important;
-        font-size: 0.9rem !important;
-        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
-        transition: all 0.2s ease;
-        width: 100%;
+        background: linear-gradient(135deg, #8B5CF6, #06B6D4) !important; color: white !important;
+        border: none !important; border-radius: 12px !important; padding: 0.6rem 1.8rem !important;
+        font-weight: 600 !important; font-size: 0.9rem !important;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); transition: all 0.2s ease; width: 100%;
     }
-    .stButton button:hover {
-        background: linear-gradient(135deg, #7C3AED, #0891B2) !important;
-        transform: scale(1.02);
-        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
-    }
+    .stButton button:hover { background: linear-gradient(135deg, #7C3AED, #0891B2) !important; transform: scale(1.02); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5); }
 
-    /* ---- Metrics ---- */
-    .stMetric {
-        background: #1E293B;
-        padding: 1.2rem !important;
-        border-radius: 12px !important;
-        border: 1px solid #334155;
-    }
-    .stMetric label {
-        color: #94A3B8 !important;
-        font-weight: 600 !important;
-        font-size: 0.7rem !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.05em;
-    }
-    .stMetric .stMetricValue {
-        color: #F8FAFC !important;
-        font-weight: 800 !important;
-        font-size: 1.5rem !important;
-    }
+    .stMetric { background: #1E293B; padding: 1.2rem !important; border-radius: 12px !important; border: 1px solid #334155; }
+    .stMetric label { color: #94A3B8 !important; font-weight: 600 !important; font-size: 0.7rem !important; text-transform: uppercase !important; letter-spacing: 0.05em; }
+    .stMetric .stMetricValue { color: #F8FAFC !important; font-weight: 800 !important; font-size: 1.5rem !important; }
 
-    /* ---- Tabs ---- */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 0.5rem;
-        background: #1E293B;
-        border-radius: 12px;
-        padding: 0.3rem;
-        border: 1px solid #334155;
-    }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        color: #94A3B8 !important;
-        font-weight: 600;
-        padding: 0.5rem 1.2rem;
-        font-size: 0.85rem;
-    }
-    .stTabs [aria-selected="true"] {
-        background: #0B1120 !important;
-        color: #06B6D4 !important;
-        box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
-    }
+    .stTabs [data-baseweb="tab-list"] { gap: 0.5rem; background: #1E293B; border-radius: 12px; padding: 0.3rem; border: 1px solid #334155; }
+    .stTabs [data-baseweb="tab"] { border-radius: 8px; color: #94A3B8 !important; font-weight: 600; padding: 0.5rem 1.2rem; font-size: 0.85rem; }
+    .stTabs [aria-selected="true"] { background: #0B1120 !important; color: #06B6D4 !important; box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
 
-    /* ---- Expanders ---- */
-    .streamlit-expanderHeader {
-        background: #1E293B !important;
-        border-radius: 8px !important;
-        border: 1px solid #334155 !important;
-        color: #F8FAFC !important;
-        font-weight: 600 !important;
-        padding: 1rem !important;
-    }
+    .streamlit-expanderHeader { background: #1E293B !important; border-radius: 8px !important; border: 1px solid #334155 !important; color: #F8FAFC !important; font-weight: 600 !important; padding: 1rem !important; }
     .streamlit-expanderHeader:hover { background: #0F172A !important; border-color: #06B6D4 !important; }
-    .streamlit-expanderContent {
-        background: #0F172A !important;
-        border: 1px solid #334155 !important;
-        border-top: none !important;
-        border-radius: 0 0 8px 8px !important;
-        padding: 1.5rem !important;
-    }
+    .streamlit-expanderContent { background: #0F172A !important; border: 1px solid #334155 !important; border-top: none !important; border-radius: 0 0 8px 8px !important; padding: 1.5rem !important; }
 
-    /* ---- Chat Input ---- */
-    .stChatInput input {
-        border: 1px solid #334155 !important;
-        border-radius: 12px !important;
-        padding: 0.8rem 1.5rem !important;
-        background: #1E293B !important;
-        color: #F8FAFC !important;
-    }
-    .stChatInput input:focus {
-        border-color: #06B6D4 !important;
-        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2) !important;
-    }
+    .stChatInput input { border: 1px solid #334155 !important; border-radius: 12px !important; padding: 0.8rem 1.5rem !important; background: #1E293B !important; color: #F8FAFC !important; }
+    .stChatInput input:focus { border-color: #06B6D4 !important; box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2) !important; }
 
-    /* ---- Footer ---- */
-    .footer {
-        margin-top: 4rem; padding-top: 2rem;
-        border-top: 1px solid #1E293B;
-        color: #64748B !important;
-        font-size: 0.8rem; text-align: center;
-        display: flex; justify-content: space-between; flex-wrap: wrap;
-    }
+    .footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #1E293B; color: #64748B !important; font-size: 0.8rem; text-align: center; display: flex; justify-content: space-between; flex-wrap: wrap; }
     .footer span { color: #06B6D4 !important; font-weight: bold; }
 
-    /* ---- Drone Mascot ---- */
-    .drone-mascot {
-        position: fixed; bottom: 20px; right: 20px; width: 120px;
-        z-index: 10000; pointer-events: none;
-        animation: floatDrone 4s ease-in-out infinite alternate;
-        mix-blend-mode: screen;
-        filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
-    }
-    @keyframes floatDrone {
-        0% { transform: translateY(0px) rotate(-3deg); }
-        100% { transform: translateY(-15px) rotate(3deg); }
-    }
+    .drone-mascot { position: fixed; bottom: 20px; right: 20px; width: 120px; z-index: 10000; pointer-events: none; animation: floatDrone 4s ease-in-out infinite alternate; mix-blend-mode: screen; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); }
+    @keyframes floatDrone { 0% { transform: translateY(0px) rotate(-3deg); } 100% { transform: translateY(-15px) rotate(3deg); } }
     .drone-img { width: 100%; height: auto; display: block; }
-
-    /* ---- Badge ---- */
-    .badge {
-        display: inline-block;
-        padding: 0.2rem 0.7rem;
-        background: rgba(6, 182, 212, 0.15);
-        color: #06B6D4 !important;
-        border-radius: 20px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        margin-right: 0.4rem;
-        margin-bottom: 0.4rem;
-    }
+    .badge { display: inline-block; padding: 0.2rem 0.7rem; background: rgba(6, 182, 212, 0.15); color: #06B6D4 !important; border-radius: 20px; font-size: 0.7rem; font-weight: 600; margin-right: 0.4rem; margin-bottom: 0.4rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -308,7 +137,7 @@ st.markdown("""
 st.markdown("""
 <div class="hero">
     <h1>Video Intelligence <span>Studio Lens</span></h1>
-    <p>Upload a video to automatically decode its editing DNA — color grading, transitions, audio structure, and motion patterns. Or inspect any video link to get instant insights.</p>
+    <p>Upload a video or paste a link to automatically decode its editing DNA — color grading, transitions, audio structure, and motion patterns.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -550,38 +379,40 @@ def get_recommendations(results):
 
     return recs
 
-# ---------- Link Inspector ----------
-def get_link_info(url):
-    """Extract metadata from a video URL without downloading."""
+# ---------- Download Function for Remote URL ----------
+def download_video_from_url(url, output_dir):
+    """Download video using yt-dlp. Returns (filepath, error)."""
     try:
         import yt_dlp
     except ImportError:
-        return None, "yt-dlp is not installed. Please install it via requirements.txt."
+        return None, "yt-dlp is not installed."
 
     ydl_opts = {
+        'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
+        'format': 'bv*+ba/b',
         'quiet': True,
         'no_warnings': True,
-        'skip_download': True,
-        'extract_flat': False,
-        'socket_timeout': 15,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['tv', 'android', 'web_safari'],
+                'player_skip': ['webpage'],
+            }
+        },
+        'impersonate': 'chrome',
+        'source_address': '0.0.0.0',
         'nocheckcertificate': True,
+        'geo_bypass': True,
     }
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
+            info = ydl.extract_info(url, download=True)
             if not info:
-                return None, "Could not extract information from this URL."
-            return {
-                'title': info.get('title', 'Unknown Title'),
-                'uploader': info.get('uploader', info.get('channel', 'Unknown')),
-                'duration': info.get('duration', 0) or 0,
-                'view_count': info.get('view_count', 0) or 0,
-                'upload_date': info.get('upload_date', 'Unknown'),
-                'description': (info.get('description') or '')[:600],
-                'thumbnail': info.get('thumbnail', ''),
-                'webpage_url': info.get('webpage_url', url),
-                'extractor': info.get('extractor', 'Unknown'),
-            }, None
+                return None, "Failed to extract video info (empty response)."
+            filepath = ydl.prepare_filename(info)
+            if not filepath:
+                return None, "Failed to determine output filename."
+            return filepath, None
     except Exception as e:
         return None, str(e)
 
@@ -642,9 +473,9 @@ def answer_question(question, results=None):
 
 st.markdown("<div style='padding-top: 20px;'></div>", unsafe_allow_html=True)
 
-tab_analysis, tab_inspect, tab_styles, tab_resources = st.tabs([
+tab_analysis, tab_url, tab_styles, tab_resources = st.tabs([
     "📁 Local Analysis",
-    "🔍 Link Inspector",
+    "🔗 Remote URL Analysis",
     "🎨 Style Library",
     "📚 Resource Hub"
 ])
@@ -654,18 +485,12 @@ tab_analysis, tab_inspect, tab_styles, tab_resources = st.tabs([
 # ============================================================
 with tab_analysis:
     col_upload, col_desc = st.columns([2, 1])
-
     with col_upload:
-        uploaded_file = st.file_uploader(
-            "Upload a video to analyze",
-            type=["mp4", "mov", "avi", "mkv"],
-            label_visibility="collapsed"
-        )
+        uploaded_file = st.file_uploader("Upload a video to analyze", type=["mp4", "mov", "avi", "mkv"], label_visibility="collapsed")
         if uploaded_file is not None:
             st.session_state['uploaded_file_obj'] = uploaded_file
             st.session_state['video_name'] = uploaded_file.name
             st.success("✓ File ready. Click 'Run Full Analysis' below.")
-
     with col_desc:
         st.markdown("""
         <div class="glass-card">
@@ -687,143 +512,151 @@ with tab_analysis:
                 with open(video_path, "wb") as f:
                     f.write(uploaded_file.read())
                 st.session_state['video_path'] = video_path
-
                 progress_bar = st.progress(0)
                 status_text = st.empty()
-
                 def update_progress(value, text):
                     progress_bar.progress(value)
                     status_text.text(text)
-
                 with st.spinner("Analyzing..."):
                     results = analyze_video(video_path, update_progress)
-
                 progress_bar.empty()
                 status_text.empty()
-
                 if results is None:
                     st.error("Could not open video. Please try a different file.")
                 else:
                     st.session_state['analysis_results'] = results
                     st.rerun()
 
-    # Display Results
-    if 'analysis_results' in st.session_state:
-        results = st.session_state['analysis_results']
-        st.divider()
-
-        st.subheader("📊 Telemetry", divider=True)
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1: st.metric("Duration", f"{results['duration']:.1f}s")
-        with col2: st.metric("Frame Rate", f"{results['fps']:.2f} fps")
-        with col3: st.metric("Color Style", results['dominant_color'])
-        with col4: st.metric("Camera Motion", results['camera_motion'])
-        with col5:
-            if results['tempo']: st.metric("Tempo (BPM)", f"{results['tempo']:.0f}")
-            else: st.metric("Tempo (BPM)", "N/A")
-
-        if results['annotated_frames']:
-            st.subheader("🖼️ Sample Frames", divider=True)
-            cols = st.columns(min(5, len(results['annotated_frames'])))
-            for i, frame in enumerate(results['annotated_frames']):
-                with cols[i % len(cols)]:
-                    st.image(frame, caption=f"Frame {i+1}", use_container_width=True)
-
-        if results['transitions']:
-            st.subheader("🎬 Transition Analysis", divider=True)
-            transition_types = [t[1] for t in results['transitions']]
-            df = pd.DataFrame(transition_types, columns=["Transition"])
-            st.bar_chart(df["Transition"].value_counts())
-        else:
-            st.info("No significant transitions detected in this clip.")
-
-        st.subheader("🎵 Audio Profile", divider=True)
-        if results['tempo']:
-            mood = "Fast / Energetic" if results['tempo'] > 120 else "Moderate" if results['tempo'] > 90 else "Slow / Calm"
-            st.write(f"**Mood:** {mood} ({results['tempo']:.0f} BPM)")
-        st.write(f"**Dialogue Detected:** {'Yes' if results['is_speech'] else 'No clear speech detected.'}")
-
-        st.subheader("✏️ Editing Blueprint", divider=True)
-        recommendations = get_recommendations(results)
-        for rec in recommendations:
-            with st.expander(rec['feature'], expanded=True):
-                st.markdown("**Implementation Steps:**")
-                for step in rec['steps']:
-                    st.markdown(f"- {step}")
-                if rec['assets']:
-                    st.markdown(f"**Resources:** {rec['assets']}")
-                if rec['ai_prompt'] != "Not applicable":
-                    st.markdown(f"**Prompt:** `{rec['ai_prompt']}`")
-
-        report_text = f"VIDEO ANALYSIS REPORT\n{'='*40}\nDuration: {results['duration']:.1f}s\nFPS: {results['fps']:.2f}\nColor: {results['dominant_color']}\nCamera: {results['camera_motion']}\n\nTRANSITIONS:\n"
-        for _, ttype in results['transitions']:
-            report_text += f"- {ttype}\n"
-        report_text += "\nAUDIO:\n"
-        if results['tempo']:
-            report_text += f"Tempo: {results['tempo']:.0f} BPM\n"
-        if results['is_speech']:
-            report_text += "Speech detected.\n"
-        report_text += "\nRECOMMENDATIONS:\n"
-        for rec in recommendations:
-            report_text += f"\n### {rec['feature']}\n"
-            for step in rec['steps']:
-                report_text += f"- {step}\n"
-
-        st.download_button("📄 Export Report (.txt)", data=report_text, file_name="studio_report.txt", mime="text/plain")
-
 # ============================================================
-# TAB 2: LINK INSPECTOR
+# TAB 2: REMOTE URL ANALYSIS
 # ============================================================
-with tab_inspect:
-    st.markdown("### 🔍 Inspect Any Video Link")
-    st.markdown("Paste a YouTube, Vimeo, or any supported video link below. We'll extract metadata and give you insights without downloading the video.")
+with tab_url:
+    st.markdown("### 🔗 Analyze a Video from a URL")
+    st.markdown("Paste a direct video link (Vimeo, Twitter, TikTok, direct MP4, etc.). We'll download it and run the full analysis, just like the Local File tab.")
+    
+    st.warning("⚠️ **Note on YouTube:** YouTube aggressively blocks cloud servers (like Streamlit). If YouTube fails, please download the video to your computer and use the **Local Analysis** tab instead. Other platforms will work perfectly.")
 
-    link_url = st.text_input("Video URL", placeholder="https://www.youtube.com/watch?v=...", label_visibility="collapsed", key="link_input")
+    video_url = st.text_input("Video URL", placeholder="https://vimeo.com/... or https://example.com/video.mp4", label_visibility="collapsed", key="url_input")
 
-    if st.button("🔍 Inspect Link", key="inspect_btn"):
-        if not link_url:
+    if st.button("⬇ Download and Analyze", key="run_url"):
+        if not video_url:
             st.warning("Please paste a link first.")
         else:
-            with st.spinner("Fetching metadata..."):
-                info, error = get_link_info(link_url)
+            temp_dir = tempfile.gettempdir()
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
+            status_text.text("Downloading video...")
+            progress_bar.progress(0.1)
+
+            filepath, error = download_video_from_url(video_url, temp_dir)
 
             if error:
-                st.error(f"Could not inspect this link: {error}")
-                st.info("💡 **Tip:** Some platforms (like YouTube) block metadata requests from cloud servers. In that case, please download the video and use the 'Local Analysis' tab.")
-            elif info:
-                st.success("✓ Metadata extracted successfully!")
+                progress_bar.empty()
+                status_text.empty()
+                st.error(f"Download failed: {error}")
+                st.info("💡 **Tip:** If this is a YouTube link, YouTube is blocking the cloud server. Please download the video and use the **Local Analysis** tab.")
+            elif filepath is None:
+                progress_bar.empty()
+                status_text.empty()
+                st.error("Download failed silently. Please check the URL and try again.")
+            else:
+                st.success(f"✓ Downloaded: {os.path.basename(filepath)}")
+                st.session_state['video_path'] = filepath
+                st.session_state['video_name'] = os.path.basename(filepath)
 
-                col_thumb, col_info = st.columns([1, 2])
-                with col_thumb:
-                    if info['thumbnail']:
-                        st.image(info['thumbnail'], use_container_width=True)
+                # Run full analysis
+                def update_progress(value, text):
+                    progress_bar.progress(value)
+                    status_text.text(text)
 
-                with col_info:
-                    st.markdown(f"### {info['title']}")
-                    st.markdown(f"**Channel:** {info['uploader']}")
-                    duration_str = f"{int(info['duration'] // 60)}m {int(info['duration'] % 60)}s" if info['duration'] else "N/A"
-                    st.markdown(f"**Duration:** {duration_str}")
-                    st.markdown(f"**Views:** {info['view_count']:,}" if info['view_count'] else "**Views:** N/A")
-                    st.markdown(f"**Platform:** {info['extractor']}")
+                with st.spinner("Analyzing..."):
+                    results = analyze_video(filepath, update_progress)
 
-                if info['description']:
-                    with st.expander("📝 Description"):
-                        st.write(info['description'])
+                progress_bar.empty()
+                status_text.empty()
 
-                st.divider()
-                st.markdown("### 💡 What to Look For in This Video")
-                st.markdown("""
-                Based on common editing patterns, here are the techniques you should observe when watching this video:
+                if results is None:
+                    st.error("Could not analyze the downloaded video. The file may be corrupt.")
+                else:
+                    st.session_state['analysis_results'] = results
+                    st.rerun()
 
-                - **Color Grading:** Notice if the video uses a warm, cool, or cinematic tone. Look at the shadows vs. highlights.
-                - **Transitions:** Are they using hard cuts, fades, zooms, or slides between scenes?
-                - **Camera Motion:** Does the camera stay static, or is it panning, tilting, or moving with a gimbal?
-                - **Text Overlays:** Are there titles, subtitles, or kinetic typography? What fonts and animations?
-                - **Music & Audio:** Is the music fast, slow, or moderate? Is there a voiceover or dialogue?
-                - **Pacing:** How quickly does the video cut? Fast-paced or slow and deliberate?
-                """)
+# ============================================================
+# RESULTS DISPLAY (Shared by both tabs)
+# ============================================================
+if 'analysis_results' in st.session_state:
+    results = st.session_state['analysis_results']
+    st.divider()
 
-                st.info("💡 To get a full automated analysis, download this video and upload it in the **Local Analysis** tab.")
+    if 'video_path' in st.session_state and os.path.exists(st.session_state['video_path']):
+        with open(st.session_state['video_path'], "rb") as f:
+            video_bytes = f.read()
+        st.download_button(
+            label="⬇ Download Source Video",
+            data=video_bytes,
+            file_name=st.session_state.get('video_name', 'video.mp4'),
+            mime="video/mp4"
+        )
+
+    st.subheader("📊 Telemetry", divider=True)
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1: st.metric("Duration", f"{results['duration']:.1f}s")
+    with col2: st.metric("Frame Rate", f"{results['fps']:.2f} fps")
+    with col3: st.metric("Color Style", results['dominant_color'])
+    with col4: st.metric("Camera Motion", results['camera_motion'])
+    with col5:
+        if results['tempo']: st.metric("Tempo (BPM)", f"{results['tempo']:.0f}")
+        else: st.metric("Tempo (BPM)", "N/A")
+
+    if results['annotated_frames']:
+        st.subheader("🖼️ Sample Frames", divider=True)
+        cols = st.columns(min(5, len(results['annotated_frames'])))
+        for i, frame in enumerate(results['annotated_frames']):
+            with cols[i % len(cols)]:
+                st.image(frame, caption=f"Frame {i+1}", use_container_width=True)
+
+    if results['transitions']:
+        st.subheader("🎬 Transition Analysis", divider=True)
+        transition_types = [t[1] for t in results['transitions']]
+        df = pd.DataFrame(transition_types, columns=["Transition"])
+        st.bar_chart(df["Transition"].value_counts())
+    else:
+        st.info("No significant transitions detected in this clip.")
+
+    st.subheader("🎵 Audio Profile", divider=True)
+    if results['tempo']:
+        mood = "Fast / Energetic" if results['tempo'] > 120 else "Moderate" if results['tempo'] > 90 else "Slow / Calm"
+        st.write(f"**Mood:** {mood} ({results['tempo']:.0f} BPM)")
+    st.write(f"**Dialogue Detected:** {'Yes' if results['is_speech'] else 'No clear speech detected.'}")
+
+    st.subheader("✏️ Editing Blueprint", divider=True)
+    recommendations = get_recommendations(results)
+    for rec in recommendations:
+        with st.expander(rec['feature'], expanded=True):
+            st.markdown("**Implementation Steps:**")
+            for step in rec['steps']:
+                st.markdown(f"- {step}")
+            if rec['assets']:
+                st.markdown(f"**Resources:** {rec['assets']}")
+            if rec['ai_prompt'] != "Not applicable":
+                st.markdown(f"**Prompt:** `{rec['ai_prompt']}`")
+
+    report_text = f"VIDEO ANALYSIS REPORT\n{'='*40}\nDuration: {results['duration']:.1f}s\nFPS: {results['fps']:.2f}\nColor: {results['dominant_color']}\nCamera: {results['camera_motion']}\n\nTRANSITIONS:\n"
+    for _, ttype in results['transitions']:
+        report_text += f"- {ttype}\n"
+    report_text += "\nAUDIO:\n"
+    if results['tempo']:
+        report_text += f"Tempo: {results['tempo']:.0f} BPM\n"
+    if results['is_speech']:
+        report_text += "Speech detected.\n"
+    report_text += "\nRECOMMENDATIONS:\n"
+    for rec in recommendations:
+        report_text += f"\n### {rec['feature']}\n"
+        for step in rec['steps']:
+            report_text += f"- {step}\n"
+
+    st.download_button("📄 Export Report (.txt)", data=report_text, file_name="studio_report.txt", mime="text/plain")
 
 # ============================================================
 # TAB 3: STYLE LIBRARY
@@ -833,54 +666,14 @@ with tab_styles:
     st.markdown("Explore popular video editing styles with step-by-step instructions for **CapCut** (free) and **DaVinci Resolve** (free).")
 
     style_data = [
-        {
-            "name": "🎬 Teal & Orange (Hollywood Look)",
-            "desc": "The classic cinematic blockbuster look. Cool shadows + warm highlights. Used in almost every Hollywood action film.",
-            "best_for": "Action, Cinematic, Trailer",
-            "steps": "In CapCut: Filters → search 'Teal Orange' → apply at 70% strength.\nIn DaVinci: Color Wheels → Shadows to cyan-blue, Highlights to orange."
-        },
-        {
-            "name": "🌅 Warm Golden Hour",
-            "desc": "Golden sunset tones, cozy and inviting. Perfect for travel and lifestyle content.",
-            "best_for": "Travel, Vlog, Lifestyle",
-            "steps": "In CapCut: Adjust → Temperature +25, Tint +10, Saturation +10.\nAdd a subtle 'Sunburst' filter."
-        },
-        {
-            "name": "🌙 Cool Cinematic Blue",
-            "desc": "Moody, atmospheric, and dramatic. Great for sci-fi, thriller, or introspective content.",
-            "best_for": "Sci-Fi, Thriller, Drama",
-            "steps": "In CapCut: Adjust → Temperature -20, Contrast +15.\nFilters → search 'Cinematic Blue' or 'Moody'."
-        },
-        {
-            "name": "📜 Vintage / Sepia Film",
-            "desc": "Old-school film look with warm tones, grain, and faded blacks. Nostalgic and artistic.",
-            "best_for": "Nostalgia, Documentary, Artistic",
-            "steps": "In CapCut: Filters → 'Sepia' or 'Vintage'.\nAdd film grain overlay (search 'free film grain' on YouTube) with Screen blend mode at 30% opacity."
-        },
-        {
-            "name": "⬛ High Contrast B&W",
-            "desc": "Bold, dramatic, and timeless. Great for portraits, fashion, and dramatic storytelling.",
-            "best_for": "Portrait, Fashion, Drama",
-            "steps": "In CapCut: Adjust → Saturation 0, Contrast +40, Brightness -5."
-        },
-        {
-            "name": "🌈 Pastel Dreamy",
-            "desc": "Soft, airy, and whimsical. Popular in beauty, lifestyle, and romantic content.",
-            "best_for": "Beauty, Romance, Lifestyle",
-            "steps": "In CapCut: Filters → search 'Pastel' or 'Dreamy'.\nAdjust → Saturation +5, Contrast -10, Brightness +10."
-        },
-        {
-            "name": "⚡ Cyberpunk Neon",
-            "desc": "Vibrant purples, pinks, and blues. High saturation and glow effects. Futuristic and bold.",
-            "best_for": "Tech, Music Videos, Futuristic",
-            "steps": "In CapCut: Filters → 'Neon' or 'Cyberpunk'.\nAdd glow effect (Effects → 'Glow') at 40%."
-        },
-        {
-            "name": "🎞️ Film Emulation",
-            "desc": "Mimics the look of Kodak Portra, Fuji, or CineStill film stocks. Organic and analog feel.",
-            "best_for": "Portrait, Weddings, Artistic",
-            "steps": "In CapCut: Filters → 'Film' → try 'Kodak' or 'Fuji'.\nAdd subtle grain overlay at 20% opacity."
-        }
+        {"name": "🎬 Teal & Orange (Hollywood Look)", "desc": "The classic cinematic blockbuster look. Cool shadows + warm highlights.", "best_for": "Action, Cinematic, Trailer", "steps": "In CapCut: Filters → search 'Teal Orange' → apply at 70% strength.\nIn DaVinci: Color Wheels → Shadows to cyan-blue, Highlights to orange."},
+        {"name": "🌅 Warm Golden Hour", "desc": "Golden sunset tones, cozy and inviting. Perfect for travel and lifestyle content.", "best_for": "Travel, Vlog, Lifestyle", "steps": "In CapCut: Adjust → Temperature +25, Tint +10, Saturation +10.\nAdd a subtle 'Sunburst' filter."},
+        {"name": "🌙 Cool Cinematic Blue", "desc": "Moody, atmospheric, and dramatic. Great for sci-fi, thriller, or introspective content.", "best_for": "Sci-Fi, Thriller, Drama", "steps": "In CapCut: Adjust → Temperature -20, Contrast +15.\nFilters → search 'Cinematic Blue' or 'Moody'."},
+        {"name": "📜 Vintage / Sepia Film", "desc": "Old-school film look with warm tones, grain, and faded blacks.", "best_for": "Nostalgia, Documentary, Artistic", "steps": "In CapCut: Filters → 'Sepia' or 'Vintage'.\nAdd film grain overlay (search 'free film grain' on YouTube) with Screen blend mode at 30% opacity."},
+        {"name": "⬛ High Contrast B&W", "desc": "Bold, dramatic, and timeless. Great for portraits, fashion, and dramatic storytelling.", "best_for": "Portrait, Fashion, Drama", "steps": "In CapCut: Adjust → Saturation 0, Contrast +40, Brightness -5."},
+        {"name": "🌈 Pastel Dreamy", "desc": "Soft, airy, and whimsical. Popular in beauty, lifestyle, and romantic content.", "best_for": "Beauty, Romance, Lifestyle", "steps": "In CapCut: Filters → search 'Pastel' or 'Dreamy'.\nAdjust → Saturation +5, Contrast -10, Brightness +10."},
+        {"name": "⚡ Cyberpunk Neon", "desc": "Vibrant purples, pinks, and blues. High saturation and glow effects.", "best_for": "Tech, Music Videos, Futuristic", "steps": "In CapCut: Filters → 'Neon' or 'Cyberpunk'.\nAdd glow effect (Effects → 'Glow') at 40%."},
+        {"name": "🎞️ Film Emulation", "desc": "Mimics the look of Kodak Portra, Fuji, or CineStill film stocks.", "best_for": "Portrait, Weddings, Artistic", "steps": "In CapCut: Filters → 'Film' → try 'Kodak' or 'Fuji'.\nAdd subtle grain overlay at 20% opacity."}
     ]
 
     for style in style_data:
@@ -888,12 +681,9 @@ with tab_styles:
         <div class="style-card">
             <div class="style-title">{style['name']}</div>
             <div class="style-desc">{style['desc']}</div>
-            <div style="margin-top: 0.8rem;">
-                <span class="badge">Best for: {style['best_for']}</span>
-            </div>
+            <div style="margin-top: 0.8rem;"><span class="badge">Best for: {style['best_for']}</span></div>
             <div style="margin-top: 0.8rem; font-size: 0.8rem; color: #CBD5E1; white-space: pre-line; line-height: 1.6;">
-                <strong style="color:#06B6D4;">How to:</strong>
-                {style['steps']}
+                <strong style="color:#06B6D4;">How to:</strong> {style['steps']}
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -907,74 +697,34 @@ with tab_resources:
 
     st.markdown("#### 🎵 Music & Audio")
     st.markdown("""
-    <div class="resource-card">
-        <a href="https://www.youtube.com/audiolibrary" target="_blank">YouTube Audio Library</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Royalty-free music and sound effects from YouTube. Filter by mood, genre, and duration.</p>
-    </div>
-    <div class="resource-card">
-        <a href="https://pixabay.com/music/" target="_blank">Pixabay Music</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Free music with no attribution required. Huge library across all genres.</p>
-    </div>
-    <div class="resource-card">
-        <a href="https://freesound.org/" target="_blank">Freesound.org</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Massive collaborative database of Creative Commons licensed sound effects.</p>
-    </div>
-    <div class="resource-card">
-        <a href="https://www.zapsplat.com/" target="_blank">Zapsplat</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Over 100,000 free sound effects and music tracks.</p>
-    </div>
+    <div class="resource-card"><a href="https://www.youtube.com/audiolibrary" target="_blank">YouTube Audio Library</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Royalty-free music and sound effects.</p></div>
+    <div class="resource-card"><a href="https://pixabay.com/music/" target="_blank">Pixabay Music</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Free music with no attribution required.</p></div>
+    <div class="resource-card"><a href="https://freesound.org/" target="_blank">Freesound.org</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Creative Commons licensed sound effects.</p></div>
     """, unsafe_allow_html=True)
 
     st.markdown("#### 🎨 Color LUTs & Grading")
     st.markdown("""
-    <div class="resource-card">
-        <a href="https://www.freeluts.com/" target="_blank">FreeLUTs.com</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Hundreds of free LUTs for cinematic color grading.</p>
-    </div>
-    <div class="resource-card">
-        <a href="https://groundcontrol.film/" target="_blank">Ground Control</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Premium-quality free film emulation LUTs.</p>
-    </div>
+    <div class="resource-card"><a href="https://www.freeluts.com/" target="_blank">FreeLUTs.com</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Hundreds of free LUTs for cinematic color grading.</p></div>
+    <div class="resource-card"><a href="https://groundcontrol.film/" target="_blank">Ground Control</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Premium-quality free film emulation LUTs.</p></div>
     """, unsafe_allow_html=True)
 
     st.markdown("#### 🎞️ Video Overlays & Stock")
     st.markdown("""
-    <div class="resource-card">
-        <a href="https://www.pexels.com/videos/" target="_blank">Pexels Videos</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Free HD stock video footage, no attribution required.</p>
-    </div>
-    <div class="resource-card">
-        <a href="https://mixkit.co/free-stock-video/" target="_blank">Mixkit</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Free HD videos, music, sound effects, and templates.</p>
-    </div>
-    <div class="resource-card">
-        <a href="https://pixabay.com/videos/" target="_blank">Pixabay Videos</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Free stock videos and overlays.</p>
-    </div>
+    <div class="resource-card"><a href="https://www.pexels.com/videos/" target="_blank">Pexels Videos</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Free HD stock video footage.</p></div>
+    <div class="resource-card"><a href="https://mixkit.co/free-stock-video/" target="_blank">Mixkit</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Free HD videos, music, and templates.</p></div>
+    <div class="resource-card"><a href="https://pixabay.com/videos/" target="_blank">Pixabay Videos</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Free stock videos and overlays.</p></div>
     """, unsafe_allow_html=True)
 
     st.markdown("#### 🔤 Fonts & Typography")
     st.markdown("""
-    <div class="resource-card">
-        <a href="https://fonts.google.com/" target="_blank">Google Fonts</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Over 1,500 free, open-source fonts for any project.</p>
-    </div>
-    <div class="resource-card">
-        <a href="https://www.dafont.com/" target="_blank">DaFont</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Thousands of free fonts including display and decorative.</p>
-    </div>
+    <div class="resource-card"><a href="https://fonts.google.com/" target="_blank">Google Fonts</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Over 1,500 free, open-source fonts.</p></div>
+    <div class="resource-card"><a href="https://www.dafont.com/" target="_blank">DaFont</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Thousands of free fonts including display and decorative.</p></div>
     """, unsafe_allow_html=True)
 
     st.markdown("#### 🎙️ AI Voice & Narration")
     st.markdown("""
-    <div class="resource-card">
-        <a href="https://elevenlabs.io/" target="_blank">ElevenLabs</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Realistic AI voices for voiceovers. Free tier available.</p>
-    </div>
-    <div class="resource-card">
-        <a href="https://play.ht/" target="_blank">Play.ht</a>
-        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">AI voice generator with multiple languages and accents.</p>
-    </div>
+    <div class="resource-card"><a href="https://elevenlabs.io/" target="_blank">ElevenLabs</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">Realistic AI voices for voiceovers. Free tier.</p></div>
+    <div class="resource-card"><a href="https://play.ht/" target="_blank">Play.ht</a><p style="margin:0.3rem 0 0 0; font-size:0.85rem; color:#94A3B8;">AI voice generator with multiple languages.</p></div>
     """, unsafe_allow_html=True)
 
 # ============================================================
