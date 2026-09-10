@@ -606,11 +606,23 @@ def download_video_from_url(url, output_dir):
     except ImportError:
         return None, "yt-dlp is not installed."
 
-    if not os.path.exists(COOKIES_PATH):
-        return None, "cookies.txt not found. Please export YouTube cookies and place them next to app.py."
+    # --- 1. Determine the cookie file ---
+    cookie_file = None
+    if "COOKIES_TXT" in st.secrets:
+        # Use Streamlit Secrets (Recommended for Cloud)
+        cookie_file = os.path.join(output_dir, "streamlit_secrets_cookies.txt")
+        with open(cookie_file, "w") as f:
+            f.write(st.secrets["COOKIES_TXT"])
+    elif os.path.exists(COOKIES_PATH):
+        # Fallback to local cookies.txt file
+        cookie_file = COOKIES_PATH
+    
+    if not cookie_file:
+        return None, "No cookies.txt found. Please upload a valid cookies.txt file to your repo, or add COOKIES_TXT to Streamlit Secrets."
 
-    player_clients = ["tv", "android", "web_safari"]
-    last_error = None
+    # --- 2. Try multiple YouTube clients ---
+    player_clients = ["tv", "ios", "android", "web_safari"]
+    last_error = "Unknown error"
 
     for client in player_clients:
         ydl_opts = {
@@ -618,7 +630,7 @@ def download_video_from_url(url, output_dir):
             'format': 'bv*+ba/b',
             'quiet': True,
             'no_warnings': True,
-            'cookiefile': COOKIES_PATH,
+            'cookiefile': cookie_file,
             'extractor_args': {
                 'youtube': {
                     'player_client': [client],
@@ -627,25 +639,29 @@ def download_video_from_url(url, output_dir):
             },
             'impersonate': 'chrome',
             'source_address': '0.0.0.0',
+            'nocheckcertificate': True,
+            'geo_bypass': True,
         }
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
                 if not info:
-                    return None, "Failed to extract video info (empty response)."
+                    last_error = f"Empty response from client {client}"
+                    continue
                 filepath = ydl.prepare_filename(info)
                 if not filepath:
-                    return None, "Failed to determine output filename."
+                    last_error = f"Failed to determine filename from client {client}"
+                    continue
                 return filepath, None  # Success!
         except Exception as e:
-            last_error = e
-            if "403" in str(e) or "Forbidden" in str(e):
+            last_error = str(e)
+            if "403" in last_error or "Forbidden" in last_error:
                 continue
             else:
                 break
 
-    return None, str(last_error)
+    return None, f"All attempts failed. Last error: {last_error}"
 
 # ---------- UI: Upload & Link Section ----------
 col_upload, col_desc = st.columns([2, 1])
