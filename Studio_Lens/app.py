@@ -599,31 +599,69 @@ def answer_question(question, results=None):
     
     return f"I couldn't find a specific answer, but here are search links:\n🔗 [Google: '{question}']({google_search})\n🔗 [YouTube: '{question}']({yt_search})\n\nTry asking about: transitions, color grading, music, text, speed, effects, overlays, green screen, export, etc."
 
+import os
+
+# Path to your cookies file (will be in the same folder as app.py)
+COOKIES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+
 def download_video_from_url(url, output_dir):
-    """Download video using yt-dlp with Android client bypass."""
+    """
+    Download video using yt-dlp with cookies and player client escalation to bypass 403 errors.
+    """
     try:
         import yt_dlp
     except ImportError:
         return None, "yt-dlp is not installed. Run `pip install yt-dlp` to enable link downloads."
-    
-    ydl_opts = {
-        'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
-        'format': 'mp4/best',
-        'quiet': True,
-        'no_warnings': True,
-        # THIS IS THE BYPASS: Pretend to be an Android phone
-        'extractor_args': {'youtube': {'player_client': ['android']}}, 
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
+
+    # Check if cookies file exists
+    if not os.path.exists(COOKIES_PATH):
+        return None, "cookies.txt not found. Please export YouTube cookies and place them next to app.py."
+
+    # List of player clients to try, in order of reliability
+    player_clients = [
+        "tv",           # Often the most reliable
+        "android",      # Good fallback
+        "web_safari",   # Another fallback
+    ]
+
+    last_error = None
+
+    # Try each player client until one succeeds
+    for client in player_clients:
+        ydl_opts = {
+            'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
+            'format': 'bv*+ba/b',  # Best video + best audio, or best combined
+            'quiet': True,
+            'no_warnings': True,
+            'cookiefile': COOKIES_PATH,  # Use the exported cookies
+            'extractor_args': {
+                'youtube': {
+                    'player_client': [client],  # Force a specific client
+                    'player_skip': ['webpage'],  # Skip fetching the webpage
+                }
+            },
+            # Impersonate a real browser to avoid TLS fingerprinting
+            'impersonate': 'chrome',
+            # Force IPv4, as some IPv6 pools are more scrutinized[reference:3]
+            'source_address': '0.0.0.0',
         }
-    }
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filepath = ydl.prepare_filename(info)
-            return filepath, None
-    except Exception as e:
-        return None, str(e)
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                filepath = ydl.prepare_filename(info)
+                return filepath, None  # Success!
+        except Exception as e:
+            last_error = e
+            # If this client fails with 403, try the next one
+            if "403" in str(e) or "Forbidden" in str(e):
+                continue
+            else:
+                # For other errors, break immediately
+                break
+
+    # If all clients failed, return the last error
+    return None, str(last_error)
 
 # ---------- UI: Upload & Link Section ----------
 col_upload, col_desc = st.columns([2, 1])
