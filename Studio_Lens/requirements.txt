@@ -4,4 +4,4 @@ numpy
 librosa
 pandas
 imageio-ffmpeg
-pytubefix
+yt-dlp
