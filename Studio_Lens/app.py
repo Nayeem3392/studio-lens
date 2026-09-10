@@ -8,7 +8,12 @@ import subprocess
 import pandas as pd
 import time
 import base64
-import imageio_ffmpeg
+import shutil
+
+try:
+    import imageio_ffmpeg
+except ModuleNotFoundError:
+    imageio_ffmpeg = None
 
 # ---------- PAGE CONFIG (MUST BE FIRST) ----------
 st.set_page_config(
@@ -333,13 +338,27 @@ st.markdown("""
 def extract_audio(video_path):
     temp_dir = tempfile.gettempdir()
     audio_path = os.path.join(temp_dir, "temp_audio.wav")
+    ffmpeg_exe = None
+
     try:
-        # Bulletproof fix: use the bundled ffmpeg from imageio-ffmpeg
-        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        if imageio_ffmpeg is not None:
+            ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        ffmpeg_exe = None
+
+    if not ffmpeg_exe:
+        ffmpeg_exe = shutil.which("ffmpeg")
+
+    if not ffmpeg_exe:
+        print("Audio extraction failed: ffmpeg is not installed or not available on PATH.")
+        return None
+
+    try:
         subprocess.run(
             [ffmpeg_exe, '-i', video_path, '-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2', audio_path, '-y'],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
+            check=True,
         )
     except Exception as e:
         print(f"Audio extraction failed: {str(e)}")
