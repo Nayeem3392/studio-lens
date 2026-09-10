@@ -8,7 +8,12 @@ import subprocess
 import pandas as pd
 import time
 import base64
-import imageio_ffmpeg
+import shutil
+
+try:
+    import imageio_ffmpeg
+except ModuleNotFoundError:
+    imageio_ffmpeg = None
 
 # ---------- PAGE CONFIG (MUST BE FIRST) ----------
 st.set_page_config(
@@ -333,12 +338,27 @@ st.markdown("""
 def extract_audio(video_path):
     temp_dir = tempfile.gettempdir()
     audio_path = os.path.join(temp_dir, "temp_audio.wav")
+    ffmpeg_exe = None
+
     try:
-        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        if imageio_ffmpeg is not None:
+            ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        ffmpeg_exe = None
+
+    if not ffmpeg_exe:
+        ffmpeg_exe = shutil.which("ffmpeg")
+
+    if not ffmpeg_exe:
+        print("Audio extraction failed: ffmpeg is not installed or not available on PATH.")
+        return None
+
+    try:
         subprocess.run(
             [ffmpeg_exe, '-i', video_path, '-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2', audio_path, '-y'],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
+            check=True,
         )
     except Exception as e:
         print(f"Audio extraction failed: {str(e)}")
@@ -634,7 +654,7 @@ with col_upload:
     tab1, tab2 = st.tabs(["📁 Local File", "🔗 Remote URL"])
     
     with tab1:
-        uploaded_file = st.file_uploader("", type=["mp4", "mov", "avi", "mkv"], label_visibility="collapsed")
+        uploaded_file = st.file_uploader("Upload a video", type=["mp4", "mov", "avi", "mkv"], label_visibility="collapsed")
         if uploaded_file is not None:
             st.session_state['uploaded_file_obj'] = uploaded_file
             st.session_state['video_name'] = uploaded_file.name
@@ -642,7 +662,7 @@ with col_upload:
     
     with tab2:
         st.warning("⚠️ YouTube blocks cloud servers. This will fail on Streamlit Cloud. Please use Local File.")
-        video_url = st.text_input("", placeholder="https://youtube.com/watch?v=...", label_visibility="collapsed")
+        video_url = st.text_input("Video URL", placeholder="https://youtube.com/watch?v=...", label_visibility="collapsed")
         if st.button("Fetch Video", use_container_width=True):
             if video_url:
                 with st.spinner("Downloading..."):
