@@ -3,6 +3,5 @@ opencv-python-headless
 numpy
 librosa
 pandas
-yt-dlp
 imageio-ffmpeg
-curl_cffi
+pytubefix
