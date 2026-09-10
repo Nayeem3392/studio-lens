@@ -8,6 +8,7 @@ import subprocess
 import pandas as pd
 import time
 import base64
+import imageio_ffmpeg
 
 # ---------- PAGE CONFIG (MUST BE FIRST) ----------
 st.set_page_config(
@@ -332,14 +333,22 @@ st.markdown("""
 def extract_audio(video_path):
     temp_dir = tempfile.gettempdir()
     audio_path = os.path.join(temp_dir, "temp_audio.wav")
-    subprocess.run(
-        ['ffmpeg', '-i', video_path, '-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2', audio_path, '-y'],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
-    )
+    try:
+        # Bulletproof fix: use the bundled ffmpeg from imageio-ffmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        subprocess.run(
+            [ffmpeg_exe, '-i', video_path, '-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2', audio_path, '-y'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+    except Exception as e:
+        print(f"Audio extraction failed: {str(e)}")
+        return None
     return audio_path
 
 def analyze_audio(audio_path):
+    if not audio_path or not os.path.exists(audio_path):
+        return None, None, None
     try:
         y, sr = librosa.load(audio_path, duration=30)
         tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
@@ -355,99 +364,69 @@ def detect_color_style(frame):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     sat = np.mean(hsv[:, :, 1])
     val = np.mean(hsv[:, :, 2])
-    if sat < 30:
-        return "Black & White"
+    if sat < 30: return "Black & White"
     b, g, r = cv2.split(frame)
     avg_r, avg_g, avg_b = np.mean(r), np.mean(g), np.mean(b)
-    if avg_r > avg_g > avg_b and avg_r - avg_b > 20:
-        return "Sepia / Vintage"
+    if avg_r > avg_g > avg_b and avg_r - avg_b > 20: return "Sepia / Vintage"
     dark_mask = val < 100
     bright_mask = val > 150
     if np.any(dark_mask) and np.any(bright_mask):
         dark_hue = np.mean(hsv[:, :, 0][dark_mask])
         bright_hue = np.mean(hsv[:, :, 0][bright_mask])
-        if (10 <= bright_hue <= 25) and (100 <= dark_hue <= 130):
-            return "Teal & Orange"
-    if avg_r > avg_b:
-        return "Warm"
-    elif avg_b > avg_r:
-        return "Cool"
+        if (10 <= bright_hue <= 25) and (100 <= dark_hue <= 130): return "Teal & Orange"
+    if avg_r > avg_b: return "Warm"
+    elif avg_b > avg_r: return "Cool"
     return "Normal"
 
 def detect_brightness_contrast(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    brightness = np.mean(gray)
-    contrast = np.std(gray)
-    return brightness, contrast
+    return np.mean(gray), np.std(gray)
 
 def detect_transitions(frames, threshold_cut=30.0):
     transitions = []
     for i in range(1, len(frames)):
-        prev = frames[i-1]
-        curr = frames[i]
+        prev, curr = frames[i-1], frames[i]
         diff = cv2.absdiff(prev, curr)
-        mean_diff = np.mean(diff)
-        if mean_diff > threshold_cut:
+        if np.mean(diff) > threshold_cut:
             transitions.append((i, "Cut"))
         else:
-            prev_brightness = np.mean(prev)
-            curr_brightness = np.mean(curr)
-            if prev_brightness > 100 and curr_brightness < 20:
-                transitions.append((i, "Fade to Black"))
-            elif prev_brightness < 20 and curr_brightness > 100:
-                transitions.append((i, "Fade from Black"))
+            prev_b, curr_b = np.mean(prev), np.mean(curr)
+            if prev_b > 100 and curr_b < 20: transitions.append((i, "Fade to Black"))
+            elif prev_b < 20 and curr_b > 100: transitions.append((i, "Fade from Black"))
             else:
                 prev_corners = cv2.goodFeaturesToTrack(prev, maxCorners=50, qualityLevel=0.01, minDistance=10)
                 if prev_corners is not None:
                     curr_corners, status, _ = cv2.calcOpticalFlowPyrLK(prev, curr, prev_corners, None)
                     if curr_corners is not None and status is not None:
-                        good_new = curr_corners[status == 1]
-                        good_old = prev_corners[status == 1]
+                        good_new, good_old = curr_corners[status == 1], prev_corners[status == 1]
                         if len(good_new) > 5:
                             motion = good_new - good_old
                             h, w = prev.shape
                             center = np.array([w/2, h/2])
-                            dist_old = np.linalg.norm(good_old - center, axis=1)
-                            dist_new = np.linalg.norm(good_new - center, axis=1)
-                            avg_old = np.mean(dist_old)
-                            avg_new = np.mean(dist_new)
-                            if avg_new > avg_old * 1.2:
-                                transitions.append((i, "Zoom In"))
-                            elif avg_new < avg_old * 0.8:
-                                transitions.append((i, "Zoom Out"))
+                            avg_old = np.mean(np.linalg.norm(good_old - center, axis=1))
+                            avg_new = np.mean(np.linalg.norm(good_new - center, axis=1))
+                            if avg_new > avg_old * 1.2: transitions.append((i, "Zoom In"))
+                            elif avg_new < avg_old * 0.8: transitions.append((i, "Zoom Out"))
                             else:
-                                dx = np.mean(motion[:, 0])
-                                dy = np.mean(motion[:, 1])
-                                if abs(dx) > 2 and abs(dy) < 1:
-                                    transitions.append((i, "Slide / Pan"))
+                                dx, dy = np.mean(motion[:, 0]), np.mean(motion[:, 1])
+                                if abs(dx) > 2 and abs(dy) < 1: transitions.append((i, "Slide / Pan"))
     return transitions
 
 def detect_camera_motion(frames):
-    if len(frames) < 2:
-        return "Static"
-    prev = frames[0]
-    curr = frames[-1]
+    if len(frames) < 2: return "Static"
+    prev, curr = frames[0], frames[-1]
     prev_corners = cv2.goodFeaturesToTrack(prev, maxCorners=100, qualityLevel=0.01, minDistance=10)
-    if prev_corners is None:
-        return "Static"
+    if prev_corners is None: return "Static"
     curr_corners, status, _ = cv2.calcOpticalFlowPyrLK(prev, curr, prev_corners, None)
-    if curr_corners is None or status is None:
-        return "Static"
-    good_new = curr_corners[status == 1]
-    good_old = prev_corners[status == 1]
-    if len(good_new) < 5:
-        return "Static"
+    if curr_corners is None or status is None: return "Static"
+    good_new, good_old = curr_corners[status == 1], prev_corners[status == 1]
+    if len(good_new) < 5: return "Static"
     motion = good_new - good_old
-    dx = np.mean(motion[:, 0])
-    dy = np.mean(motion[:, 1])
-    if abs(dx) > 10 and abs(dy) < 5:
-        return "Panning horizontally"
-    elif abs(dy) > 10 and abs(dx) < 5:
-        return "Tilting vertically"
-    elif abs(dx) < 3 and abs(dy) < 3:
-        return "Static"
-    else:
-        return "Camera moving (pan/tilt)"
+    dx, dy = np.mean(motion[:, 0]), np.mean(motion[:, 1])
+    if abs(dx) > 10 and abs(dy) < 5: return "Panning horizontally"
+    elif abs(dy) > 10 and abs(dx) < 5: return "Tilting vertically"
+    elif abs(dx) < 3 and abs(dy) < 3: return "Static"
+    else: return "Camera moving (pan/tilt)"
 
 def detect_text_presence(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -462,51 +441,40 @@ def detect_text_presence(frame):
 def analyze_video(video_path, progress_callback=None):
     results = {}
     cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        return None
+    if not cap.isOpened(): return None
     fps = cap.get(cv2.CAP_PROP_FPS)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    duration = frame_count / fps if fps > 0 else 0
-    results['duration'] = duration
+    results['duration'] = frame_count / fps if fps > 0 else 0
     results['fps'] = fps
 
     sample_rate = 2
     sample_interval = max(1, int(fps / sample_rate))
-    frames = []
-    color_frames = []
+    frames, color_frames = [], []
     frame_idx = 0
     while True:
         ret, frame = cap.read()
-        if not ret:
-            break
+        if not ret: break
         if frame_idx % sample_interval == 0:
             small = cv2.resize(frame, (320, 180))
-            gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
-            frames.append(gray)
+            frames.append(cv2.cvtColor(small, cv2.COLOR_BGR2GRAY))
             color_frames.append(small)
         frame_idx += 1
     cap.release()
 
-    results['num_sampled_frames'] = len(frames)
-    if progress_callback:
-        progress_callback(0.3, "Detecting transitions...")
-    transitions = detect_transitions(frames)
-    results['transitions'] = transitions
+    if progress_callback: progress_callback(0.3, "Detecting transitions...")
+    results['transitions'] = detect_transitions(frames)
 
-    if progress_callback:
-        progress_callback(0.5, "Analyzing camera motion...")
+    if progress_callback: progress_callback(0.5, "Analyzing camera motion...")
     results['camera_motion'] = detect_camera_motion(frames)
 
-    if progress_callback:
-        progress_callback(0.6, "Analyzing colors...")
+    if progress_callback: progress_callback(0.6, "Analyzing colors...")
     color_votes = {}
     for cframe in color_frames:
         style = detect_color_style(cframe)
         color_votes[style] = color_votes.get(style, 0) + 1
     results['dominant_color'] = max(color_votes, key=color_votes.get) if color_votes else "Unknown"
 
-    brightness_list = []
-    contrast_list = []
+    brightness_list, contrast_list = [], []
     for cframe in color_frames:
         b, c = detect_brightness_contrast(cframe)
         brightness_list.append(b)
@@ -514,12 +482,10 @@ def analyze_video(video_path, progress_callback=None):
     results['avg_brightness'] = np.mean(brightness_list)
     results['avg_contrast'] = np.mean(contrast_list)
 
-    if progress_callback:
-        progress_callback(0.75, "Detecting text...")
+    if progress_callback: progress_callback(0.75, "Detecting text...")
     sample_frames_for_text = color_frames[::max(1, len(color_frames)//5)]
     text_present_frames = sum(1 for frame in sample_frames_for_text if detect_text_presence(frame))
     results['text_overlay'] = text_present_frames > (len(sample_frames_for_text) // 2)
-
     results['objects'] = []
 
     annotated_frames = []
@@ -527,125 +493,55 @@ def analyze_video(video_path, progress_callback=None):
         style = detect_color_style(frame)
         annotated = frame.copy()
         cv2.putText(annotated, style, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
-        annotated_rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
-        annotated_frames.append(annotated_rgb)
+        annotated_frames.append(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB))
     results['annotated_frames'] = annotated_frames
 
-    if progress_callback:
-        progress_callback(0.9, "Extracting audio...")
+    if progress_callback: progress_callback(0.9, "Extracting audio...")
     audio_path = extract_audio(video_path)
     tempo, energy, is_speech = analyze_audio(audio_path)
     results['tempo'] = tempo
     results['energy'] = energy
     results['is_speech'] = is_speech
-    if os.path.exists(audio_path):
-        os.remove(audio_path)
+    if audio_path and os.path.exists(audio_path): os.remove(audio_path)
 
-    if progress_callback:
-        progress_callback(1.0, "Done!")
+    if progress_callback: progress_callback(1.0, "Done!")
     return results
 
 def get_recommendations(results):
     recs = []
     color = results['dominant_color']
     if color == "Teal & Orange":
-        recs.append({
-            "feature": "Teal & Orange Color Grade",
-            "steps": [
-                "Open **CapCut** (free) – [Download](https://www.capcut.com/)",
-                "Import your video: tap 'New project' → select video.",
-                "Tap the clip → **Filters** → search 'Teal Orange'.",
-                "Apply filter, adjust strength.",
-                "Alternatively in **DaVinci Resolve** – [Download](https://www.blackmagicdesign.com/products/davinciresolve)",
-                "Go to **Color** page → use **Color Wheels**: shadows to blue, highlights to orange.",
-                "Free LUTs: [freeluts.com](https://www.freeluts.com/)"
-            ],
-            "assets": "No extra assets needed.",
-            "ai_prompt": "AI prompt: 'Cinematic teal and orange color graded scene, high contrast, film look'"
-        })
+        recs.append({"feature": "Teal & Orange Color Grade", "steps": ["Open **CapCut** (free) – [Download](https://www.capcut.com/)", "Import your video: tap 'New project' → select video.", "Tap the clip → **Filters** → search 'Teal Orange'.", "Apply filter, adjust strength.", "Alternatively in **DaVinci Resolve** – [Download](https://www.blackmagicdesign.com/products/davinciresolve)", "Go to **Color** page → use **Color Wheels**: shadows to blue, highlights to orange.", "Free LUTs: [freeluts.com](https://www.freeluts.com/)"], "assets": "No extra assets needed.", "ai_prompt": "AI prompt: 'Cinematic teal and orange color graded scene, high contrast, film look'"})
     elif color == "Sepia / Vintage":
-        recs.append({
-            "feature": "Sepia / Vintage Look",
-            "steps": [
-                "Open **CapCut** – [Download](https://www.capcut.com/)",
-                "Import video, tap clip → **Filters** → search 'Sepia' or 'Vintage'.",
-                "Apply filter.",
-                "For film grain: search 'free film grain overlay' on YouTube, download, place over clip, blend mode **Overlay** or **Screen**, low opacity."
-            ],
-            "assets": "Film grain: [YouTube search](https://www.youtube.com/results?search_query=free+film+grain+overlay)",
-            "ai_prompt": "AI prompt: 'Old vintage sepia film look, scratches, warm tones'"
-        })
+        recs.append({"feature": "Sepia / Vintage Look", "steps": ["Open **CapCut** – [Download](https://www.capcut.com/)", "Import video, tap clip → **Filters** → search 'Sepia' or 'Vintage'.", "Apply filter.", "For film grain: search 'free film grain overlay' on YouTube, download, place over clip, blend mode **Overlay** or **Screen**, low opacity."], "assets": "Film grain: [YouTube search](https://www.youtube.com/results?search_query=free+film+grain+overlay)", "ai_prompt": "AI prompt: 'Old vintage sepia film look, scratches, warm tones'"})
     elif color == "Black & White":
-        recs.append({
-            "feature": "Black & White",
-            "steps": [
-                "Set Saturation to 0: CapCut → clip → **Adjust** → **Saturation** → 0.",
-                "Or apply 'Black & White' filter from **Filters**."
-            ],
-            "assets": "No assets needed.",
-            "ai_prompt": "AI prompt: 'High contrast black and white cinematic shot'"
-        })
+        recs.append({"feature": "Black & White", "steps": ["Set Saturation to 0: CapCut → clip → **Adjust** → **Saturation** → 0.", "Or apply 'Black & White' filter from **Filters**."], "assets": "No assets needed.", "ai_prompt": "AI prompt: 'High contrast black and white cinematic shot'"})
     elif color == "Warm":
-        recs.append({
-            "feature": "Warm Color Tone",
-            "steps": [
-                "In CapCut: clip → **Adjust** → **Temperature** → move slider right (+20)."
-            ],
-            "assets": "No assets needed.",
-            "ai_prompt": "AI prompt: 'Warm sunset lighting, golden hour, cozy atmosphere'"
-        })
+        recs.append({"feature": "Warm Color Tone", "steps": ["In CapCut: clip → **Adjust** → **Temperature** → move slider right (+20)."], "assets": "No assets needed.", "ai_prompt": "AI prompt: 'Warm sunset lighting, golden hour, cozy atmosphere'"})
     elif color == "Cool":
-        recs.append({
-            "feature": "Cool Color Tone",
-            "steps": [
-                "In CapCut: clip → **Adjust** → **Temperature** → move slider left (-20)."
-            ],
-            "assets": "No assets needed.",
-            "ai_prompt": "AI prompt: 'Cool blue moonlight, icy tones, calm mood'"
-        })
+        recs.append({"feature": "Cool Color Tone", "steps": ["In CapCut: clip → **Adjust** → **Temperature** → move slider left (-20)."], "assets": "No assets needed.", "ai_prompt": "AI prompt: 'Cool blue moonlight, icy tones, calm mood'"})
 
-    if results['avg_contrast'] > 70:
-        recs.append({
-            "feature": "High Contrast",
-            "steps": ["Increase contrast: clip → **Adjust** → **Contrast** → +30."],
-            "assets": "No assets needed.",
-            "ai_prompt": "AI prompt: 'High contrast dramatic lighting, deep shadows, bright highlights'"
-        })
-    elif results['avg_contrast'] < 40:
-        recs.append({
-            "feature": "Low Contrast (Soft Look)",
-            "steps": ["Decrease contrast: clip → **Adjust** → **Contrast** → -30."],
-            "assets": "Optional: add slight blur or diffusion.",
-            "ai_prompt": "AI prompt: 'Soft low contrast dreamy look, pastel colors'"
-        })
+    if results['avg_contrast'] > 70: recs.append({"feature": "High Contrast", "steps": ["Increase contrast: clip → **Adjust** → **Contrast** → +30."], "assets": "No assets needed.", "ai_prompt": "AI prompt: 'High contrast dramatic lighting, deep shadows, bright highlights'"})
+    elif results['avg_contrast'] < 40: recs.append({"feature": "Low Contrast (Soft Look)", "steps": ["Decrease contrast: clip → **Adjust** → **Contrast** → -30."], "assets": "Optional: add slight blur or diffusion.", "ai_prompt": "AI prompt: 'Soft low contrast dreamy look, pastel colors'"})
 
     if results['transitions']:
         transition_counts = {}
-        for _, ttype in results['transitions']:
-            transition_counts[ttype] = transition_counts.get(ttype, 0) + 1
+        for _, ttype in results['transitions']: transition_counts[ttype] = transition_counts.get(ttype, 0) + 1
         for ttype, count in transition_counts.items():
-            if ttype == "Cut":
-                recs.append({"feature": "Cuts", "steps": ["Place clips next to each other with no transition."], "assets": "No assets needed.", "ai_prompt": "Not applicable"})
-            elif "Fade" in ttype:
-                recs.append({"feature": "Fade Transitions", "steps": ["In CapCut: tap transition box → choose 'Fade' or 'Dissolve'. Adjust duration."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
-            elif "Zoom" in ttype:
-                recs.append({"feature": "Zoom Transitions", "steps": ["In CapCut: transition box → search 'Zoom' → apply. Or keyframe scale in Premiere."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
-            elif "Slide" in ttype:
-                recs.append({"feature": "Slide / Pan Transitions", "steps": ["In CapCut: transition box → search 'Slide'. Or keyframe position manually."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
+            if ttype == "Cut": recs.append({"feature": "Cuts", "steps": ["Place clips next to each other with no transition."], "assets": "No assets needed.", "ai_prompt": "Not applicable"})
+            elif "Fade" in ttype: recs.append({"feature": "Fade Transitions", "steps": ["In CapCut: tap transition box → choose 'Fade' or 'Dissolve'. Adjust duration."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
+            elif "Zoom" in ttype: recs.append({"feature": "Zoom Transitions", "steps": ["In CapCut: transition box → search 'Zoom' → apply. Or keyframe scale in Premiere."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
+            elif "Slide" in ttype: recs.append({"feature": "Slide / Pan Transitions", "steps": ["In CapCut: transition box → search 'Slide'. Or keyframe position manually."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
 
-    if results['camera_motion'] != "Static":
-        recs.append({"feature": f"Camera Movement: {results['camera_motion']}", "steps": ["To recreate: use gimbal or steady hand when filming.", "Or add digital movement: keyframe Position/Scale in editor."], "assets": "No assets needed.", "ai_prompt": "Not applicable"})
-
-    if results['text_overlay']:
-        recs.append({"feature": "Text Overlay Detected", "steps": ["Add text: CapCut → **Text** → **Add Text**.", "Type text, adjust font, size, color.", "Premiere Pro: use Type Tool (T)."], "assets": "Free fonts: [Google Fonts](https://fonts.google.com/)", "ai_prompt": "Not applicable"})
+    if results['camera_motion'] != "Static": recs.append({"feature": f"Camera Movement: {results['camera_motion']}", "steps": ["To recreate: use gimbal or steady hand when filming.", "Or add digital movement: keyframe Position/Scale in editor."], "assets": "No assets needed.", "ai_prompt": "Not applicable"})
+    if results['text_overlay']: recs.append({"feature": "Text Overlay Detected", "steps": ["Add text: CapCut → **Text** → **Add Text**.", "Type text, adjust font, size, color.", "Premiere Pro: use Type Tool (T)."], "assets": "Free fonts: [Google Fonts](https://fonts.google.com/)", "ai_prompt": "Not applicable"})
 
     if results['tempo']:
         if results['tempo'] > 120: mood = "fast / energetic"
         elif results['tempo'] > 90: mood = "moderate"
         else: mood = "slow / calm"
         recs.append({"feature": f"Music ({mood}, {results['tempo']:.0f} BPM)", "steps": [f"Go to free music site: [YouTube Audio Library](https://www.youtube.com/audiolibrary), [Pixabay Music](https://pixabay.com/music/).", f"Search for '{mood} music {results['tempo']:.0f} BPM'.", "Download and import into editor.", "Align with video length."], "assets": f"Search term: 'royalty free {mood} music {results['tempo']:.0f} BPM'", "ai_prompt": f"AI prompt: 'Upbeat electronic track at {results['tempo']:.0f} BPM, energetic'"})
-    if results['is_speech']:
-        recs.append({"feature": "Voiceover / Dialogue", "steps": ["Record with microphone, or use AI voice: [ElevenLabs](https://elevenlabs.io/), [Play.ht](https://play.ht/).", "Import and place on audio track."], "assets": "AI voices: ElevenLabs, Play.ht", "ai_prompt": "AI prompt: 'Professional voice, confident, explaining product, 30 seconds'"})
+    if results['is_speech']: recs.append({"feature": "Voiceover / Dialogue", "steps": ["Record with microphone, or use AI voice: [ElevenLabs](https://elevenlabs.io/), [Play.ht](https://play.ht/).", "Import and place on audio track."], "assets": "AI voices: ElevenLabs, Play.ht", "ai_prompt": "AI prompt: 'Professional voice, confident, explaining product, 30 seconds'"})
 
     return recs
 
@@ -653,23 +549,54 @@ def answer_question(question, results=None):
     q = question.lower().strip()
     yt_search = f"https://www.youtube.com/results?search_query={question.replace(' ', '+')}"
     google_search = f"https://www.google.com/search?q={question.replace(' ', '+')}"
-    
-    # ... (This function remains the same, you can keep your existing one) ...
-    # I'm omitting the huge if-else block for brevity in this example, 
-    # but keep your existing answer_question function here.
 
-    return f"I couldn't find a specific answer, but here are search links:\n🔗 [Google: '{question}']({google_search})\n🔗 [YouTube: '{question}']({yt_search})"
+    if any(word in q for word in ["star", "sparkle", "glitter", "particle", "magic dust", "stars"]):
+        return "**✨ How to add Star / Sparkle / Particle Effects:**\n\n1. Open **CapCut** (free) – [Download](https://www.capcut.com/)\n2. Tap on your clip, then tap **Overlays** or **Effects**.\n3. Search for 'stars', 'sparkles', 'particles', or 'magic'.\n4. Choose an overlay (e.g., 'Sparkle' or 'Star').\n5. Drag it on top of your video and adjust size/position.\n6. Change blend mode to **Screen** or **Add** to remove black background.\n\n**Alternative in Premiere Pro:**\n1. Go to **Effects** panel, search 'Particle' or 'Star'.\n2. Drag onto your clip.\n3. Or use free overlay videos from [Pexels](https://www.pexels.com/search/videos/stars/) or [Pixabay](https://pixabay.com/videos/search/stars/).\n\n" + f"🎥 **Video Tutorial:** [Watch on YouTube]({yt_search})\n🔎 **More resources:** [Google]({google_search})"
+    if any(word in q for word in ["overlay", "light leak", "film burn", "bokeh", "dust"]):
+        return "**🎞️ How to add Overlay Effects (light leaks, bokeh, dust):**\n\n1. Download free overlays from [Pexels](https://www.pexels.com/search/videos/overlay/) or [Pixabay](https://pixabay.com/videos/search/overlay/).\n2. Import the overlay into your editor.\n3. Place it on a track **above** your main video.\n4. Change blend mode to **Screen** (or **Overlay** for subtle effect).\n5. Adjust opacity and size as needed.\n\n" + f"🎥 **Video Tutorial:** [Watch on YouTube]({yt_search})\n🔎 **More resources:** [Google]({google_search})"
+    if any(word in q for word in ["intro", "outro", "start effect", "opening"]):
+        return "**🎬 How to add Intro / Start Effects:**\n\n1. In **CapCut**: Tap 'Effects' → search 'Intro' or 'Opening'.\n2. Choose a template or effect and drag it to the beginning.\n3. Use **Text Animation**: tap 'Text' → 'Add Text', type title, then 'Animation' → choose entrance animation.\n4. For advanced intros, use **Canva** (free) – [canva.com](https://www.canva.com/) and search 'video intro templates'.\n5. Export and import into your editor.\n\n" + f"🎥 **Video Tutorial:** [Watch on YouTube]({yt_search})\n🔎 **More resources:** [Google]({google_search})"
+    if any(word in q for word in ["fade", "dissolve"]): return "**🌑 Fade Transition:**\nIn CapCut: tap the small square between clips → choose 'Fade' or 'Dissolve'. Adjust duration.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if "cut" in q and "transition" in q: return "**✂️ Cut Transition:**\nJust place two clips next to each other with no gap. No transition needed.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if any(word in q for word in ["zoom transition", "zoom in", "zoom out"]): return "**🔍 Zoom Transition:**\nCapCut: transition box → search 'Zoom' → apply. Or keyframe scale in Premiere Pro.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if any(word in q for word in ["slide", "pan transition", "whip"]): return "**↔️ Slide / Whip Transition:**\nCapCut: transition box → search 'Slide' or 'Whip'. Or keyframe position.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if any(word in q for word in ["glitch", "rgb", "digital"]): return "**📺 Glitch Transition:**\nCapCut: search 'Glitch' in transitions. Or use free glitch overlay videos from Pixabay.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if any(word in q for word in ["teal", "orange", "color grade", "cinematic color", "lut"]): return "**🎨 Teal & Orange Color Grade:**\nCapCut: Filters → search 'Teal Orange'. Or DaVinci Resolve Color Wheels. Free LUTs: freeluts.com.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if any(word in q for word in ["sepia", "vintage", "retro", "old film"]): return "**📜 Sepia/Vintage:**\nCapCut: Filters → search 'Sepia'. Add film grain overlay.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if any(word in q for word in ["black and white", "b&w", "monochrome"]): return "**⬛ Black & White:**\nSet Saturation to 0, or apply B&W filter.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if "contrast" in q: return "**🌗 Contrast:**\nCapCut: Adjust → Contrast. Increase for high contrast, decrease for soft.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if "music" in q or "audio" in q or "bpm" in q:
+        if results and results.get('tempo'):
+            tempo = results['tempo']
+            mood = "fast" if tempo > 120 else "moderate" if tempo > 90 else "slow"
+            return f"**🎵 Music:** Your video tempo is {tempo:.0f} BPM ({mood}).\nSearch royalty-free music on YouTube Audio Library or Pixabay Music.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+        else: return "**🎵 Music:** Go to YouTube Audio Library or Pixabay Music, download a track, import.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if any(word in q for word in ["voiceover", "voice over", "narration", "dialogue"]): return "**🎙️ Voiceover:** Record with mic, or use ElevenLabs/Play.ht. Import audio.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if any(word in q for word in ["text", "subtitle", "title", "font", "kinetic"]): return "**🔤 Text:** CapCut → Text → Add Text. Type, adjust font, size. Free fonts: Google Fonts.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if "speed" in q or "slow motion" in q or "fast motion" in q: return "**⏩ Speed:** CapCut → Speed → Normal or Curve. Decrease for slow, increase for fast.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if "stabilize" in q or "shaky" in q: return "**🛠️ Stabilize:** CapCut → Stabilize (if available). Premiere Pro → Warp Stabilizer.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if "green screen" in q or "chroma key" in q: return "**🟩 Green Screen:** CapCut → Chroma Key → pick green. Premiere → Ultra Key.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    if "export" in q or "render" in q: return "**📤 Export:** CapCut → Export button → choose 1080p. Premiere → File → Export → Media → H.264.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
+    
+    return f"I couldn't find a specific answer, but here are search links:\n🔗 [Google: '{question}']({google_search})\n🔗 [YouTube: '{question}']({yt_search})\n\nTry asking about: transitions, color grading, music, text, speed, effects, overlays, green screen, export, etc."
 
 def download_video_from_url(url, output_dir):
+    """Download video using yt-dlp with Android client bypass."""
     try:
         import yt_dlp
     except ImportError:
         return None, "yt-dlp is not installed. Run `pip install yt-dlp` to enable link downloads."
+    
     ydl_opts = {
         'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
         'format': 'mp4/best',
         'quiet': True,
         'no_warnings': True,
+        # THIS IS THE BYPASS: Pretend to be an Android phone
+        'extractor_args': {'youtube': {'player_client': ['android']}}, 
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
+        }
     }
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -718,7 +645,7 @@ with col_desc:
     </div>
     """, unsafe_allow_html=True)
 
-# ---------- ANALYSIS TRIGGER (FIXED) ----------
+# ---------- ANALYSIS TRIGGER ----------
 if 'uploaded_file_obj' in st.session_state or ('video_path' in st.session_state and os.path.exists(st.session_state['video_path'])):
     st.divider()
     col_action, col_spacer = st.columns([1, 3])
