@@ -15,7 +15,7 @@ try:
 except ModuleNotFoundError:
     imageio_ffmpeg = None
 
-# ---------- PAGE CONFIG (MUST BE FIRST) ----------
+# ---------- PAGE CONFIG ----------
 st.set_page_config(
     page_title="Studio Lens",
     page_icon="◆",
@@ -26,7 +26,6 @@ st.set_page_config(
 # ---------- PERMANENT IMAGE LOADING ----------
 current_dir = os.path.dirname(os.path.abspath(__file__))
 image_path = os.path.join(current_dir, "drone.png")
-COOKIES_PATH = os.path.join(current_dir, "cookies.txt")
 
 if os.path.exists(image_path):
     with open(image_path, "rb") as image_file:
@@ -35,19 +34,17 @@ if os.path.exists(image_path):
 else:
     drone_src = "https://cdn-icons-png.flaticon.com/512/3588/3588920.png"
 
-# ---------- INJECT CINEMATIC DARK MODE UI ----------
+# ---------- CINEMATIC DARK MODE UI ----------
 st.markdown("""
 <style>
     /* ---- FORCE CINEMATIC DARK THEME ---- */
     .stApp, body {
-        background-color: #0B1120 !important; /* Deep Slate Blue */
-        color: #F8FAFC !important; /* Pure White Text */
+        background-color: #0B1120 !important;
+        color: #F8FAFC !important;
     }
     h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stMetricValue {
         color: #F8FAFC !important;
     }
-    
-    /* ---- FIX THE FILE UPLOADER ---- */
     [data-testid="stFileUploader"] {
         background-color: #1E293B !important;
         border: 2px dashed #334155 !important;
@@ -56,20 +53,11 @@ st.markdown("""
         transition: all 0.3s ease;
     }
     [data-testid="stFileUploader"]:hover {
-        border-color: #06B6D4 !important; 
+        border-color: #06B6D4 !important;
         background-color: #0F172A !important;
     }
-    [data-testid="stFileUploader"] label {
-        color: #94A3B8 !important;
-        font-weight: 500 !important;
-    }
-    .uploadedFile {
-        background-color: #0F172A !important;
-        color: #F8FAFC !important;
-        border-radius: 8px !important;
-    }
-    
-    /* Fix Text Inputs */
+    [data-testid="stFileUploader"] label { color: #94A3B8 !important; font-weight: 500 !important; }
+    .uploadedFile { background-color: #0F172A !important; color: #F8FAFC !important; border-radius: 8px !important; }
     .stTextInput input {
         background-color: #1E293B !important;
         color: #F8FAFC !important;
@@ -80,17 +68,13 @@ st.markdown("""
         border-color: #06B6D4 !important;
         box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2) !important;
     }
-    
-    /* ---- Hide Default Streamlit Elements ---- */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
-    
-    /* ---- Fixed Navigation Bar ---- */
+
+    /* ---- Navbar ---- */
     .navbar {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%;
+        position: fixed; top: 0; left: 0; width: 100%;
         background: rgba(11, 17, 32, 0.85) !important;
         backdrop-filter: blur(12px);
         border-bottom: 1px solid #1E293B;
@@ -102,68 +86,39 @@ st.markdown("""
         box-sizing: border-box;
     }
     .nav-logo {
-        font-weight: 700;
-        font-size: 1.3rem;
-        letter-spacing: -0.03em;
+        font-weight: 700; font-size: 1.3rem; letter-spacing: -0.03em;
         color: #F8FAFC !important;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        display: flex; align-items: center; gap: 8px;
     }
     .nav-logo span { color: #06B6D4 !important; }
-    .nav-links {
-        display: flex;
-        gap: 2rem;
-        align-items: center;
-    }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
     .nav-links a {
-        text-decoration: none;
-        color: #94A3B8 !important;
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: color 0.2s;
+        text-decoration: none; color: #94A3B8 !important;
+        font-size: 0.9rem; font-weight: 500; transition: color 0.2s;
     }
     .nav-links a:hover { color: #F8FAFC !important; }
     .nav-cta {
-        background: #1E293B;
-        color: #06B6D4 !important;
-        padding: 0.4rem 1.2rem;
-        border-radius: 40px;
-        font-weight: 600;
-        font-size: 0.8rem;
+        background: #1E293B; color: #06B6D4 !important;
+        padding: 0.4rem 1.2rem; border-radius: 40px;
+        font-weight: 600; font-size: 0.8rem;
         border: 1px solid #334155;
     }
 
-    /* ---- Hero Section ---- */
-    .hero {
-        margin-bottom: 2rem;
-        position: relative;
-        z-index: 10;
-        padding-top: 80px;
-    }
+    /* ---- Hero ---- */
+    .hero { margin-bottom: 2rem; position: relative; z-index: 10; padding-top: 80px; }
     .hero h1 {
-        font-size: 3.5rem;
-        font-weight: 800;
-        letter-spacing: -0.04em;
-        color: #F8FAFC !important;
-        margin-bottom: 0.5rem;
-        line-height: 1.1;
+        font-size: 3.5rem; font-weight: 800; letter-spacing: -0.04em;
+        color: #F8FAFC !important; margin-bottom: 0.5rem; line-height: 1.1;
     }
     .hero h1 span {
-        background: linear-gradient(135deg, #8B5CF6, #06B6D4); /* Purple to Cyan */
+        background: linear-gradient(135deg, #8B5CF6, #06B6D4);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
-    .hero p {
-        font-size: 1.1rem;
-        color: #94A3B8 !important;
-        max-width: 600px;
-        font-weight: 400;
-        margin-top: 0;
-    }
+    .hero p { font-size: 1.1rem; color: #94A3B8 !important; max-width: 700px; margin-top: 0; }
 
-    /* ---- Glassmorphism Cards ---- */
+    /* ---- Cards ---- */
     .glass-card {
         background: #1E293B;
         border: 1px solid #334155;
@@ -178,8 +133,35 @@ st.markdown("""
         box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.1);
         border-color: #06B6D4;
     }
+    .style-card {
+        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    .style-card:hover {
+        border-color: #8B5CF6;
+        transform: translateX(4px);
+    }
+    .style-title { font-size: 1.1rem; font-weight: 700; color: #06B6D4 !important; margin-bottom: 0.5rem; }
+    .style-desc { font-size: 0.85rem; color: #94A3B8 !important; line-height: 1.5; }
+    .resource-card {
+        background: #1E293B;
+        border-left: 3px solid #06B6D4;
+        border-radius: 8px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 0.8rem;
+    }
+    .resource-card a {
+        color: #06B6D4 !important;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .resource-card a:hover { text-decoration: underline; }
 
-    /* ---- Modern Buttons ---- */
+    /* ---- Buttons ---- */
     .stButton button {
         background: linear-gradient(135deg, #8B5CF6, #06B6D4) !important;
         color: white !important;
@@ -204,7 +186,6 @@ st.markdown("""
         padding: 1.2rem !important;
         border-radius: 12px !important;
         border: 1px solid #334155;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .stMetric label {
         color: #94A3B8 !important;
@@ -249,10 +230,7 @@ st.markdown("""
         font-weight: 600 !important;
         padding: 1rem !important;
     }
-    .streamlit-expanderHeader:hover {
-        background: #0F172A !important;
-        border-color: #06B6D4 !important;
-    }
+    .streamlit-expanderHeader:hover { background: #0F172A !important; border-color: #06B6D4 !important; }
     .streamlit-expanderContent {
         background: #0F172A !important;
         border: 1px solid #334155 !important;
@@ -268,7 +246,6 @@ st.markdown("""
         padding: 0.8rem 1.5rem !important;
         background: #1E293B !important;
         color: #F8FAFC !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .stChatInput input:focus {
         border-color: #06B6D4 !important;
@@ -277,38 +254,39 @@ st.markdown("""
 
     /* ---- Footer ---- */
     .footer {
-        margin-top: 4rem;
-        padding-top: 2rem;
+        margin-top: 4rem; padding-top: 2rem;
         border-top: 1px solid #1E293B;
         color: #64748B !important;
-        font-size: 0.8rem;
-        text-align: center;
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
+        font-size: 0.8rem; text-align: center;
+        display: flex; justify-content: space-between; flex-wrap: wrap;
     }
     .footer span { color: #06B6D4 !important; font-weight: bold; }
 
-    /* ---- Drone Mascot (Floating & Blended) ---- */
+    /* ---- Drone Mascot ---- */
     .drone-mascot {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 120px;
-        z-index: 10000;
-        pointer-events: none;
+        position: fixed; bottom: 20px; right: 20px; width: 120px;
+        z-index: 10000; pointer-events: none;
         animation: floatDrone 4s ease-in-out infinite alternate;
-        mix-blend-mode: screen; 
+        mix-blend-mode: screen;
         filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
     }
     @keyframes floatDrone {
         0% { transform: translateY(0px) rotate(-3deg); }
         100% { transform: translateY(-15px) rotate(3deg); }
     }
-    .drone-img {
-        width: 100%;
-        height: auto;
-        display: block;
+    .drone-img { width: 100%; height: auto; display: block; }
+
+    /* ---- Badge ---- */
+    .badge {
+        display: inline-block;
+        padding: 0.2rem 0.7rem;
+        background: rgba(6, 182, 212, 0.15);
+        color: #06B6D4 !important;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-right: 0.4rem;
+        margin-bottom: 0.4rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -326,42 +304,38 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ---- HERO SECTION ----
+# ---- HERO ----
 st.markdown("""
 <div class="hero">
     <h1>Video Intelligence <span>Studio Lens</span></h1>
-    <p>Upload a video or paste a link to automatically decode its editing DNA — color grading, transitions, audio structure, and motion patterns.</p>
+    <p>Upload a video to automatically decode its editing DNA — color grading, transitions, audio structure, and motion patterns. Or inspect any video link to get instant insights.</p>
 </div>
 """, unsafe_allow_html=True)
 
-# ---- BACKEND FUNCTIONS ----
+# ============================================================
+# BACKEND FUNCTIONS
+# ============================================================
+
 def extract_audio(video_path):
     temp_dir = tempfile.gettempdir()
     audio_path = os.path.join(temp_dir, "temp_audio.wav")
     ffmpeg_exe = None
-
     try:
         if imageio_ffmpeg is not None:
             ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
     except Exception:
         ffmpeg_exe = None
-
     if not ffmpeg_exe:
         ffmpeg_exe = shutil.which("ffmpeg")
-
     if not ffmpeg_exe:
-        print("Audio extraction failed: ffmpeg is not installed or not available on PATH.")
         return None
-
     try:
         subprocess.run(
-            [ffmpeg_exe, '-i', video_path, '-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2', audio_path, '-y'],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True,
+            [ffmpeg_exe, '-i', video_path, '-vn', '-acodec', 'pcm_s16le',
+             '-ar', '44100', '-ac', '2', audio_path, '-y'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
         )
-    except Exception as e:
-        print(f"Audio extraction failed: {str(e)}")
+    except Exception:
         return None
     return audio_path
 
@@ -498,14 +472,13 @@ def analyze_video(video_path, progress_callback=None):
         b, c = detect_brightness_contrast(cframe)
         brightness_list.append(b)
         contrast_list.append(c)
-    results['avg_brightness'] = np.mean(brightness_list)
-    results['avg_contrast'] = np.mean(contrast_list)
+    results['avg_brightness'] = float(np.mean(brightness_list))
+    results['avg_contrast'] = float(np.mean(contrast_list))
 
     if progress_callback: progress_callback(0.75, "Detecting text...")
     sample_frames_for_text = color_frames[::max(1, len(color_frames)//5)]
     text_present_frames = sum(1 for frame in sample_frames_for_text if detect_text_presence(frame))
     results['text_overlay'] = text_present_frames > (len(sample_frames_for_text) // 2)
-    results['objects'] = []
 
     annotated_frames = []
     for i, frame in enumerate(color_frames[:5]):
@@ -521,7 +494,9 @@ def analyze_video(video_path, progress_callback=None):
     results['tempo'] = tempo
     results['energy'] = energy
     results['is_speech'] = is_speech
-    if audio_path and os.path.exists(audio_path): os.remove(audio_path)
+    if audio_path and os.path.exists(audio_path):
+        try: os.remove(audio_path)
+        except Exception: pass
 
     if progress_callback: progress_callback(1.0, "Done!")
     return results
@@ -530,9 +505,9 @@ def get_recommendations(results):
     recs = []
     color = results['dominant_color']
     if color == "Teal & Orange":
-        recs.append({"feature": "Teal & Orange Color Grade", "steps": ["Open **CapCut** (free) – [Download](https://www.capcut.com/)", "Import your video: tap 'New project' → select video.", "Tap the clip → **Filters** → search 'Teal Orange'.", "Apply filter, adjust strength.", "Alternatively in **DaVinci Resolve** – [Download](https://www.blackmagicdesign.com/products/davinciresolve)", "Go to **Color** page → use **Color Wheels**: shadows to blue, highlights to orange.", "Free LUTs: [freeluts.com](https://www.freeluts.com/)"], "assets": "No extra assets needed.", "ai_prompt": "AI prompt: 'Cinematic teal and orange color graded scene, high contrast, film look'"})
+        recs.append({"feature": "Teal & Orange Color Grade", "steps": ["Open **CapCut** (free) – [Download](https://www.capcut.com/)", "Import your video: tap 'New project' → select video.", "Tap the clip → **Filters** → search 'Teal Orange'.", "Apply filter, adjust strength.", "In **DaVinci Resolve** – [Download](https://www.blackmagicdesign.com/products/davinciresolve)", "Go to **Color** page → use **Color Wheels**: shadows to blue, highlights to orange.", "Free LUTs: [freeluts.com](https://www.freeluts.com/)"], "assets": "No extra assets needed.", "ai_prompt": "AI prompt: 'Cinematic teal and orange color graded scene, high contrast, film look'"})
     elif color == "Sepia / Vintage":
-        recs.append({"feature": "Sepia / Vintage Look", "steps": ["Open **CapCut** – [Download](https://www.capcut.com/)", "Import video, tap clip → **Filters** → search 'Sepia' or 'Vintage'.", "Apply filter.", "For film grain: search 'free film grain overlay' on YouTube, download, place over clip, blend mode **Overlay** or **Screen**, low opacity."], "assets": "Film grain: [YouTube search](https://www.youtube.com/results?search_query=free+film+grain+overlay)", "ai_prompt": "AI prompt: 'Old vintage sepia film look, scratches, warm tones'"})
+        recs.append({"feature": "Sepia / Vintage Look", "steps": ["Open **CapCut** – [Download](https://www.capcut.com/)", "Import video, tap clip → **Filters** → search 'Sepia' or 'Vintage'.", "Apply filter.", "For film grain: search 'free film grain overlay' on YouTube, download, place over clip, blend mode **Overlay** or **Screen**."], "assets": "Film grain: [YouTube search](https://www.youtube.com/results?search_query=free+film+grain+overlay)", "ai_prompt": "AI prompt: 'Old vintage sepia film look, scratches, warm tones'"})
     elif color == "Black & White":
         recs.append({"feature": "Black & White", "steps": ["Set Saturation to 0: CapCut → clip → **Adjust** → **Saturation** → 0.", "Or apply 'Black & White' filter from **Filters**."], "assets": "No assets needed.", "ai_prompt": "AI prompt: 'High contrast black and white cinematic shot'"})
     elif color == "Warm":
@@ -540,257 +515,497 @@ def get_recommendations(results):
     elif color == "Cool":
         recs.append({"feature": "Cool Color Tone", "steps": ["In CapCut: clip → **Adjust** → **Temperature** → move slider left (-20)."], "assets": "No assets needed.", "ai_prompt": "AI prompt: 'Cool blue moonlight, icy tones, calm mood'"})
 
-    if results['avg_contrast'] > 70: recs.append({"feature": "High Contrast", "steps": ["Increase contrast: clip → **Adjust** → **Contrast** → +30."], "assets": "No assets needed.", "ai_prompt": "AI prompt: 'High contrast dramatic lighting, deep shadows, bright highlights'"})
-    elif results['avg_contrast'] < 40: recs.append({"feature": "Low Contrast (Soft Look)", "steps": ["Decrease contrast: clip → **Adjust** → **Contrast** → -30."], "assets": "Optional: add slight blur or diffusion.", "ai_prompt": "AI prompt: 'Soft low contrast dreamy look, pastel colors'"})
+    if results.get('avg_contrast', 0) > 70:
+        recs.append({"feature": "High Contrast", "steps": ["Increase contrast: clip → **Adjust** → **Contrast** → +30."], "assets": "No assets needed.", "ai_prompt": "AI prompt: 'High contrast dramatic lighting, deep shadows, bright highlights'"})
+    elif results.get('avg_contrast', 0) < 40:
+        recs.append({"feature": "Low Contrast (Soft Look)", "steps": ["Decrease contrast: clip → **Adjust** → **Contrast** → -30."], "assets": "Optional: add slight blur or diffusion.", "ai_prompt": "AI prompt: 'Soft low contrast dreamy look, pastel colors'"})
 
-    if results['transitions']:
+    if results.get('transitions'):
         transition_counts = {}
-        for _, ttype in results['transitions']: transition_counts[ttype] = transition_counts.get(ttype, 0) + 1
-        for ttype, count in transition_counts.items():
-            if ttype == "Cut": recs.append({"feature": "Cuts", "steps": ["Place clips next to each other with no transition."], "assets": "No assets needed.", "ai_prompt": "Not applicable"})
-            elif "Fade" in ttype: recs.append({"feature": "Fade Transitions", "steps": ["In CapCut: tap transition box → choose 'Fade' or 'Dissolve'. Adjust duration."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
-            elif "Zoom" in ttype: recs.append({"feature": "Zoom Transitions", "steps": ["In CapCut: transition box → search 'Zoom' → apply. Or keyframe scale in Premiere."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
-            elif "Slide" in ttype: recs.append({"feature": "Slide / Pan Transitions", "steps": ["In CapCut: transition box → search 'Slide'. Or keyframe position manually."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
+        for _, ttype in results['transitions']:
+            transition_counts[ttype] = transition_counts.get(ttype, 0) + 1
+        for ttype in transition_counts:
+            if ttype == "Cut":
+                recs.append({"feature": "Cuts", "steps": ["Place clips next to each other with no transition."], "assets": "No assets needed.", "ai_prompt": "Not applicable"})
+            elif "Fade" in ttype:
+                recs.append({"feature": "Fade Transitions", "steps": ["In CapCut: tap transition box → choose 'Fade' or 'Dissolve'. Adjust duration."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
+            elif "Zoom" in ttype:
+                recs.append({"feature": "Zoom Transitions", "steps": ["In CapCut: transition box → search 'Zoom' → apply."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
+            elif "Slide" in ttype:
+                recs.append({"feature": "Slide / Pan Transitions", "steps": ["In CapCut: transition box → search 'Slide'. Or keyframe position."], "assets": "Built-in transitions.", "ai_prompt": "Not applicable"})
 
-    if results['camera_motion'] != "Static": recs.append({"feature": f"Camera Movement: {results['camera_motion']}", "steps": ["To recreate: use gimbal or steady hand when filming.", "Or add digital movement: keyframe Position/Scale in editor."], "assets": "No assets needed.", "ai_prompt": "Not applicable"})
-    if results['text_overlay']: recs.append({"feature": "Text Overlay Detected", "steps": ["Add text: CapCut → **Text** → **Add Text**.", "Type text, adjust font, size, color.", "Premiere Pro: use Type Tool (T)."], "assets": "Free fonts: [Google Fonts](https://fonts.google.com/)", "ai_prompt": "Not applicable"})
+    if results.get('camera_motion') and results['camera_motion'] != "Static":
+        recs.append({"feature": f"Camera Movement: {results['camera_motion']}", "steps": ["To recreate: use gimbal or steady hand when filming.", "Or add digital movement: keyframe Position/Scale in editor."], "assets": "No assets needed.", "ai_prompt": "Not applicable"})
 
-    if results['tempo']:
-        if results['tempo'] > 120: mood = "fast / energetic"
-        elif results['tempo'] > 90: mood = "moderate"
-        else: mood = "slow / calm"
-        recs.append({"feature": f"Music ({mood}, {results['tempo']:.0f} BPM)", "steps": [f"Go to free music site: [YouTube Audio Library](https://www.youtube.com/audiolibrary), [Pixabay Music](https://pixabay.com/music/).", f"Search for '{mood} music {results['tempo']:.0f} BPM'.", "Download and import into editor.", "Align with video length."], "assets": f"Search term: 'royalty free {mood} music {results['tempo']:.0f} BPM'", "ai_prompt": f"AI prompt: 'Upbeat electronic track at {results['tempo']:.0f} BPM, energetic'"})
-    if results['is_speech']: recs.append({"feature": "Voiceover / Dialogue", "steps": ["Record with microphone, or use AI voice: [ElevenLabs](https://elevenlabs.io/), [Play.ht](https://play.ht/).", "Import and place on audio track."], "assets": "AI voices: ElevenLabs, Play.ht", "ai_prompt": "AI prompt: 'Professional voice, confident, explaining product, 30 seconds'"})
+    if results.get('text_overlay'):
+        recs.append({"feature": "Text Overlay Detected", "steps": ["Add text: CapCut → **Text** → **Add Text**.", "Type text, adjust font, size, color.", "Premiere Pro: use Type Tool (T)."], "assets": "Free fonts: [Google Fonts](https://fonts.google.com/)", "ai_prompt": "Not applicable"})
+
+    if results.get('tempo'):
+        tempo = results['tempo']
+        mood = "fast / energetic" if tempo > 120 else "moderate" if tempo > 90 else "slow / calm"
+        recs.append({"feature": f"Music ({mood}, {tempo:.0f} BPM)", "steps": ["Go to free music sites: [YouTube Audio Library](https://www.youtube.com/audiolibrary), [Pixabay Music](https://pixabay.com/music/).", f"Search for '{mood} music {tempo:.0f} BPM'.", "Download and import into editor."], "assets": f"Search: 'royalty free {mood} music {tempo:.0f} BPM'", "ai_prompt": f"AI prompt: 'Upbeat electronic track at {tempo:.0f} BPM, energetic'"})
+
+    if results.get('is_speech'):
+        recs.append({"feature": "Voiceover / Dialogue", "steps": ["Record with microphone, or use AI voice: [ElevenLabs](https://elevenlabs.io/), [Play.ht](https://play.ht/).", "Import and place on audio track."], "assets": "AI voices: ElevenLabs, Play.ht", "ai_prompt": "AI prompt: 'Professional voice, confident, explaining product, 30 seconds'"})
 
     return recs
 
+# ---------- Link Inspector ----------
+def get_link_info(url):
+    """Extract metadata from a video URL without downloading."""
+    try:
+        import yt_dlp
+    except ImportError:
+        return None, "yt-dlp is not installed. Please install it via requirements.txt."
+
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'skip_download': True,
+        'extract_flat': False,
+        'socket_timeout': 15,
+        'nocheckcertificate': True,
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            if not info:
+                return None, "Could not extract information from this URL."
+            return {
+                'title': info.get('title', 'Unknown Title'),
+                'uploader': info.get('uploader', info.get('channel', 'Unknown')),
+                'duration': info.get('duration', 0) or 0,
+                'view_count': info.get('view_count', 0) or 0,
+                'upload_date': info.get('upload_date', 'Unknown'),
+                'description': (info.get('description') or '')[:600],
+                'thumbnail': info.get('thumbnail', ''),
+                'webpage_url': info.get('webpage_url', url),
+                'extractor': info.get('extractor', 'Unknown'),
+            }, None
+    except Exception as e:
+        return None, str(e)
+
+# ---------- AI Assistant ----------
 def answer_question(question, results=None):
     q = question.lower().strip()
     yt_search = f"https://www.youtube.com/results?search_query={question.replace(' ', '+')}"
     google_search = f"https://www.google.com/search?q={question.replace(' ', '+')}"
 
-    if any(word in q for word in ["star", "sparkle", "glitter", "particle", "magic dust", "stars"]):
-        return "**✨ How to add Star / Sparkle / Particle Effects:**\n\n1. Open **CapCut** (free) – [Download](https://www.capcut.com/)\n2. Tap on your clip, then tap **Overlays** or **Effects**.\n3. Search for 'stars', 'sparkles', 'particles', or 'magic'.\n4. Choose an overlay (e.g., 'Sparkle' or 'Star').\n5. Drag it on top of your video and adjust size/position.\n6. Change blend mode to **Screen** or **Add** to remove black background.\n\n**Alternative in Premiere Pro:**\n1. Go to **Effects** panel, search 'Particle' or 'Star'.\n2. Drag onto your clip.\n3. Or use free overlay videos from [Pexels](https://www.pexels.com/search/videos/stars/) or [Pixabay](https://pixabay.com/videos/search/stars/).\n\n" + f"🎥 **Video Tutorial:** [Watch on YouTube]({yt_search})\n🔎 **More resources:** [Google]({google_search})"
-    if any(word in q for word in ["overlay", "light leak", "film burn", "bokeh", "dust"]):
-        return "**🎞️ How to add Overlay Effects (light leaks, bokeh, dust):**\n\n1. Download free overlays from [Pexels](https://www.pexels.com/search/videos/overlay/) or [Pixabay](https://pixabay.com/videos/search/overlay/).\n2. Import the overlay into your editor.\n3. Place it on a track **above** your main video.\n4. Change blend mode to **Screen** (or **Overlay** for subtle effect).\n5. Adjust opacity and size as needed.\n\n" + f"🎥 **Video Tutorial:** [Watch on YouTube]({yt_search})\n🔎 **More resources:** [Google]({google_search})"
-    if any(word in q for word in ["intro", "outro", "start effect", "opening"]):
-        return "**🎬 How to add Intro / Start Effects:**\n\n1. In **CapCut**: Tap 'Effects' → search 'Intro' or 'Opening'.\n2. Choose a template or effect and drag it to the beginning.\n3. Use **Text Animation**: tap 'Text' → 'Add Text', type title, then 'Animation' → choose entrance animation.\n4. For advanced intros, use **Canva** (free) – [canva.com](https://www.canva.com/) and search 'video intro templates'.\n5. Export and import into your editor.\n\n" + f"🎥 **Video Tutorial:** [Watch on YouTube]({yt_search})\n🔎 **More resources:** [Google]({google_search})"
-    if any(word in q for word in ["fade", "dissolve"]): return "**🌑 Fade Transition:**\nIn CapCut: tap the small square between clips → choose 'Fade' or 'Dissolve'. Adjust duration.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if "cut" in q and "transition" in q: return "**✂️ Cut Transition:**\nJust place two clips next to each other with no gap. No transition needed.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if any(word in q for word in ["zoom transition", "zoom in", "zoom out"]): return "**🔍 Zoom Transition:**\nCapCut: transition box → search 'Zoom' → apply. Or keyframe scale in Premiere Pro.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if any(word in q for word in ["slide", "pan transition", "whip"]): return "**↔️ Slide / Whip Transition:**\nCapCut: transition box → search 'Slide' or 'Whip'. Or keyframe position.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if any(word in q for word in ["glitch", "rgb", "digital"]): return "**📺 Glitch Transition:**\nCapCut: search 'Glitch' in transitions. Or use free glitch overlay videos from Pixabay.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if any(word in q for word in ["teal", "orange", "color grade", "cinematic color", "lut"]): return "**🎨 Teal & Orange Color Grade:**\nCapCut: Filters → search 'Teal Orange'. Or DaVinci Resolve Color Wheels. Free LUTs: freeluts.com.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if any(word in q for word in ["sepia", "vintage", "retro", "old film"]): return "**📜 Sepia/Vintage:**\nCapCut: Filters → search 'Sepia'. Add film grain overlay.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if any(word in q for word in ["black and white", "b&w", "monochrome"]): return "**⬛ Black & White:**\nSet Saturation to 0, or apply B&W filter.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if "contrast" in q: return "**🌗 Contrast:**\nCapCut: Adjust → Contrast. Increase for high contrast, decrease for soft.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if "music" in q or "audio" in q or "bpm" in q:
+    if any(w in q for w in ["star", "sparkle", "glitter", "particle", "magic"]):
+        return "**✨ Star / Sparkle / Particle Effects:**\n\n1. Open **CapCut** → tap clip → **Overlays** or **Effects**.\n2. Search for 'stars', 'sparkles', 'particles'.\n3. Drag it over your video, adjust size.\n4. Set blend mode to **Screen** or **Add**.\n\n" + f"🎥 [YouTube Tutorial]({yt_search}) | 🔎 [Google]({google_search})"
+    if any(w in q for w in ["overlay", "light leak", "bokeh", "dust"]):
+        return "**🎞️ Overlay Effects:**\n\n1. Download free overlays from [Pexels](https://www.pexels.com/search/videos/overlay/) or [Pixabay](https://pixabay.com/videos/search/overlay/).\n2. Place on track above main video.\n3. Blend mode → **Screen**.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["intro", "outro", "opening"]):
+        return "**🎬 Intro / Outro:**\n\n1. CapCut → **Effects** → search 'Intro'.\n2. Or use **Canva** for templates: [canva.com](https://www.canva.com/).\n3. Use **Text Animation** for titles.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["fade", "dissolve"]):
+        return "**🌑 Fade Transition:**\nIn CapCut: tap the square between clips → choose 'Fade' or 'Dissolve'.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if "cut" in q and "transition" in q:
+        return "**✂️ Cut Transition:**\nJust place clips next to each other with no gap.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["zoom transition", "zoom in", "zoom out"]):
+        return "**🔍 Zoom Transition:**\nCapCut: transition box → 'Zoom'. Or keyframe scale in Premiere Pro.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["slide", "whip", "pan transition"]):
+        return "**↔️ Slide / Whip Transition:**\nCapCut: transition box → search 'Slide' or 'Whip'.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["glitch", "rgb"]):
+        return "**📺 Glitch Transition:**\nCapCut: search 'Glitch' in transitions.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["teal", "orange", "color grade", "cinematic", "lut"]):
+        return "**🎨 Teal & Orange:**\nCapCut: Filters → 'Teal Orange'. Or DaVinci Color Wheels. Free LUTs: [freeluts.com](https://www.freeluts.com/).\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["sepia", "vintage", "retro"]):
+        return "**📜 Sepia/Vintage:**\nCapCut: Filters → 'Sepia'. Add film grain overlay.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["black and white", "b&w", "monochrome"]):
+        return "**⬛ Black & White:**\nSet Saturation to 0, or apply B&W filter.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if "contrast" in q:
+        return "**🌗 Contrast:**\nCapCut: Adjust → Contrast.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["music", "audio", "bpm"]):
         if results and results.get('tempo'):
             tempo = results['tempo']
             mood = "fast" if tempo > 120 else "moderate" if tempo > 90 else "slow"
-            return f"**🎵 Music:** Your video tempo is {tempo:.0f} BPM ({mood}).\nSearch royalty-free music on YouTube Audio Library or Pixabay Music.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-        else: return "**🎵 Music:** Go to YouTube Audio Library or Pixabay Music, download a track, import.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if any(word in q for word in ["voiceover", "voice over", "narration", "dialogue"]): return "**🎙️ Voiceover:** Record with mic, or use ElevenLabs/Play.ht. Import audio.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if any(word in q for word in ["text", "subtitle", "title", "font", "kinetic"]): return "**🔤 Text:** CapCut → Text → Add Text. Type, adjust font, size. Free fonts: Google Fonts.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if "speed" in q or "slow motion" in q or "fast motion" in q: return "**⏩ Speed:** CapCut → Speed → Normal or Curve. Decrease for slow, increase for fast.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if "stabilize" in q or "shaky" in q: return "**🛠️ Stabilize:** CapCut → Stabilize (if available). Premiere Pro → Warp Stabilizer.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if "green screen" in q or "chroma key" in q: return "**🟩 Green Screen:** CapCut → Chroma Key → pick green. Premiere → Ultra Key.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    if "export" in q or "render" in q: return "**📤 Export:** CapCut → Export button → choose 1080p. Premiere → File → Export → Media → H.264.\n" + f"🎥 **Tutorial:** [YouTube]({yt_search})"
-    
-    return f"I couldn't find a specific answer, but here are search links:\n🔗 [Google: '{question}']({google_search})\n🔗 [YouTube: '{question}']({yt_search})\n\nTry asking about: transitions, color grading, music, text, speed, effects, overlays, green screen, export, etc."
-def download_video_from_url(url, output_dir):
-    """Download video using pytubefix (free workaround)."""
-    try:
-        from pytubefix import YouTube
-    except ImportError:
-        return None, "pytubefix is not installed. Please check requirements.txt."
+            return f"**🎵 Music:** Your video is {tempo:.0f} BPM ({mood}).\nSearch [YouTube Audio Library](https://www.youtube.com/audiolibrary) or [Pixabay Music](https://pixabay.com/music/).\n\n" + f"🎥 [YouTube]({yt_search})"
+        return "**🎵 Music:** [YouTube Audio Library](https://www.youtube.com/audiolibrary) or [Pixabay Music](https://pixabay.com/music/).\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["voiceover", "narration", "dialogue"]):
+        return "**🎙️ Voiceover:** Use [ElevenLabs](https://elevenlabs.io/) or [Play.ht](https://play.ht/).\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["text", "subtitle", "title", "font", "kinetic"]):
+        return "**🔤 Text:** CapCut → Text → Add Text. Free fonts: [Google Fonts](https://fonts.google.com/).\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["speed", "slow motion", "fast motion"]):
+        return "**⏩ Speed:** CapCut → Speed → Normal or Curve.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["stabilize", "shaky"]):
+        return "**🛠️ Stabilize:** CapCut → Stabilize. Premiere Pro → Warp Stabilizer.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if "green screen" in q or "chroma key" in q:
+        return "**🟩 Green Screen:** CapCut → Chroma Key → pick green.\n\n" + f"🎥 [YouTube]({yt_search})"
+    if any(w in q for w in ["export", "render"]):
+        return "**📤 Export:** CapCut → 1080p. Premiere → File → Export → H.264.\n\n" + f"🎥 [YouTube]({yt_search})"
 
-    try:
-        yt = YouTube(url)
-        
-        # Try to get the highest resolution progressive stream (video + audio together)
-        stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
-        
-        # If no progressive stream is found, fall back to adaptive streams
-        if not stream:
-            stream = yt.streams.filter(adaptive=True, file_extension='mp4').order_by('resolution').desc().first()
-        
-        if not stream:
-            return None, "No downloadable stream found for this video."
+    return f"I couldn't find a specific answer, but here are search links:\n🔗 [Google]({google_search})\n🔗 [YouTube]({yt_search})\n\nTry asking about: transitions, color grading, music, text, speed, effects, overlays, green screen, export."
 
-        # Download the file
-        file_path = stream.download(output_path=output_dir)
-        return file_path, None
+# ============================================================
+# UI: TABS
+# ============================================================
 
-    except Exception as e:
-        return None, f"pytubefix error: {str(e)}"
-# ---------- UI: Upload & Link Section ----------
-col_upload, col_desc = st.columns([2, 1])
+st.markdown("<div style='padding-top: 20px;'></div>", unsafe_allow_html=True)
 
-with col_upload:
-    tab1, tab2 = st.tabs(["📁 Local File", "🔗 Remote URL"])
-    
-    with tab1:
-        uploaded_file = st.file_uploader("Upload a video", type=["mp4", "mov", "avi", "mkv"], label_visibility="collapsed")
+tab_analysis, tab_inspect, tab_styles, tab_resources = st.tabs([
+    "📁 Local Analysis",
+    "🔍 Link Inspector",
+    "🎨 Style Library",
+    "📚 Resource Hub"
+])
+
+# ============================================================
+# TAB 1: LOCAL FILE ANALYSIS
+# ============================================================
+with tab_analysis:
+    col_upload, col_desc = st.columns([2, 1])
+
+    with col_upload:
+        uploaded_file = st.file_uploader(
+            "Upload a video to analyze",
+            type=["mp4", "mov", "avi", "mkv"],
+            label_visibility="collapsed"
+        )
         if uploaded_file is not None:
             st.session_state['uploaded_file_obj'] = uploaded_file
             st.session_state['video_name'] = uploaded_file.name
-            st.success("✓ File ready for analysis. Click the button below.")
-    
-    with tab2:
-        st.warning("⚠️ YouTube blocks cloud servers. This will fail on Streamlit Cloud. Please use Local File.")
-        video_url = st.text_input("Video URL", placeholder="https://youtube.com/watch?v=...", label_visibility="collapsed")
-        if st.button("Fetch Video", use_container_width=True):
-            if video_url:
-                with st.spinner("Downloading..."):
-                    temp_dir = tempfile.gettempdir()
-                    filepath, error = download_video_from_url(video_url, temp_dir)
-                    
-                    if error:
-                        st.error(f"Error: {error}")
-                    elif filepath is None: # THE CRITICAL FIX
-                        st.error("Download failed silently. Please check your cookies.txt file or try a different video.")
-                    else:
-                        st.success(f"Downloaded: {os.path.basename(filepath)}")
-                        st.session_state['video_path'] = filepath
-                        st.session_state['video_name'] = os.path.basename(filepath)
+            st.success("✓ File ready. Click 'Run Full Analysis' below.")
 
-with col_desc:
-    st.markdown("""
-    <div class="glass-card">
-        <h4 style="margin:0 0 8px 0; color:#06B6D4;">Pro Analysis</h4>
-        <p style="margin:0; font-size:0.85rem; color:#94A3B8; line-height: 1.5;">
-            Extracts color grading, transitions, BPM, camera motion, and text overlays. Generates a step-by-step editing blueprint.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    with col_desc:
+        st.markdown("""
+        <div class="glass-card">
+            <h4 style="margin:0 0 8px 0; color:#06B6D4;">Pro Analysis</h4>
+            <p style="margin:0; font-size:0.85rem; color:#94A3B8; line-height: 1.5;">
+                Extracts color grading, transitions, BPM, camera motion, and text overlays. Generates a step-by-step editing blueprint.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-# ---------- ANALYSIS TRIGGER ----------
-if 'uploaded_file_obj' in st.session_state or ('video_path' in st.session_state and os.path.exists(st.session_state['video_path'])):
-    st.divider()
-    col_action, col_spacer = st.columns([1, 3])
-    with col_action:
-        if st.button("▶ Run Full Analysis", use_container_width=True):
-            
-            if 'uploaded_file_obj' in st.session_state:
+    if 'uploaded_file_obj' in st.session_state:
+        st.divider()
+        col_action, col_spacer = st.columns([1, 3])
+        with col_action:
+            if st.button("▶ Run Full Analysis", key="run_local"):
                 uploaded_file = st.session_state['uploaded_file_obj']
                 temp_dir = tempfile.gettempdir()
                 video_path = os.path.join(temp_dir, uploaded_file.name)
                 with open(video_path, "wb") as f:
                     f.write(uploaded_file.read())
                 st.session_state['video_path'] = video_path
-            
-            video_path = st.session_state['video_path']
-            
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            def update_progress(value, text):
-                progress_bar.progress(value)
-                status_text.text(text)
-            
-            with st.spinner("Analyzing..."):
-                results = analyze_video(video_path, update_progress)
-            
-            progress_bar.empty()
-            status_text.empty()
-            
-            if results is None:
-                st.error("Could not open video. Please check the file.")
-            else:
-                st.session_state['analysis_results'] = results
-                st.rerun()
 
-# ---------- DISPLAY RESULTS ----------
-if 'analysis_results' in st.session_state:
-    results = st.session_state['analysis_results']
-    st.divider()
-    
-    if 'video_path' in st.session_state and os.path.exists(st.session_state['video_path']):
-        with open(st.session_state['video_path'], "rb") as f:
-            video_bytes = f.read()
-        st.download_button(
-            label="⬇ Download Source Video",
-            data=video_bytes,
-            file_name=st.session_state.get('video_name', 'video.mp4'),
-            mime="video/mp4",
-            use_container_width=False
-        )
-    
-    st.subheader("Telemetry", divider=True)
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1: st.metric("Duration", f"{results['duration']:.1f}s")
-    with col2: st.metric("Frame Rate", f"{results['fps']:.2f} fps")
-    with col3: st.metric("Color Style", results['dominant_color'])
-    with col4: st.metric("Camera Motion", results['camera_motion'])
-    with col5:
-        if results['tempo']: st.metric("Tempo (BPM)", f"{results['tempo']:.0f}")
-        else: st.metric("Tempo (BPM)", "N/A")
+                progress_bar = st.progress(0)
+                status_text = st.empty()
 
-    if results['annotated_frames']:
-        st.subheader("Sample Frames", divider=True)
-        cols = st.columns(min(5, len(results['annotated_frames'])))
-        for i, frame in enumerate(results['annotated_frames']):
-            with cols[i % len(cols)]:
-                st.image(frame, caption=f"Frame {i+1}", use_container_width=True)
+                def update_progress(value, text):
+                    progress_bar.progress(value)
+                    status_text.text(text)
 
-    if results['transitions']:
-        st.subheader("Transition Analysis", divider=True)
-        transition_types = [t[1] for t in results['transitions']]
-        df = pd.DataFrame(transition_types, columns=["Transition"])
-        st.bar_chart(df["Transition"].value_counts())
-    else:
-        st.info("No significant transitions detected in this clip.")
+                with st.spinner("Analyzing..."):
+                    results = analyze_video(video_path, update_progress)
 
-    st.subheader("Audio Profile", divider=True)
-    if results['tempo']:
-        mood = "Fast / Energetic" if results['tempo'] > 120 else "Moderate" if results['tempo'] > 90 else "Slow / Calm"
-        st.write(f"**Mood:** {mood} ({results['tempo']:.0f} BPM)")
-    if results['is_speech']: st.write("**Dialogue Detected:** Voiceover or speech present.")
-    else: st.write("**Dialogue Detected:** No clear speech detected.")
+                progress_bar.empty()
+                status_text.empty()
 
-    st.subheader("Editing Blueprint", divider=True)
-    recommendations = get_recommendations(results)
-    for rec in recommendations:
-        with st.expander(rec['feature'], expanded=True):
-            st.markdown("**Implementation Steps:**")
-            for step in rec['steps']: st.markdown(f"- {step}")
-            if rec['assets']: st.markdown(f"**Resources:** {rec['assets']}")
-            if rec['ai_prompt'] != "Not applicable": st.markdown(f"**Prompt:** `{rec['ai_prompt']}`")
+                if results is None:
+                    st.error("Could not open video. Please try a different file.")
+                else:
+                    st.session_state['analysis_results'] = results
+                    st.rerun()
 
-    report_text = f"VIDEO ANALYSIS REPORT\nDuration: {results['duration']:.1f}s\nColor: {results['dominant_color']}\nCamera: {results['camera_motion']}\n\nTRANSITIONS:\n"
-    for _, ttype in results['transitions']: report_text += f"- {ttype}\n"
-    report_text += "\nAUDIO:\n"
-    if results['tempo']: report_text += f"Tempo: {results['tempo']:.0f} BPM\n"
-    if results['is_speech']: report_text += "Speech detected.\n"
-    report_text += "\nRECOMMENDATIONS:\n"
-    for rec in recommendations:
-        report_text += f"\n### {rec['feature']}\n"
-        for step in rec['steps']: report_text += f"- {step}\n"
-    
-    st.download_button("📄 Export Report (.txt)", data=report_text, file_name="studio_report.txt", mime="text/plain", use_container_width=False)
+    # Display Results
+    if 'analysis_results' in st.session_state:
+        results = st.session_state['analysis_results']
+        st.divider()
 
-# ---------- Q&A ASSISTANT ----------
+        st.subheader("📊 Telemetry", divider=True)
+        col1, col2, col3, col4, col5 = st.columns(5)
+        with col1: st.metric("Duration", f"{results['duration']:.1f}s")
+        with col2: st.metric("Frame Rate", f"{results['fps']:.2f} fps")
+        with col3: st.metric("Color Style", results['dominant_color'])
+        with col4: st.metric("Camera Motion", results['camera_motion'])
+        with col5:
+            if results['tempo']: st.metric("Tempo (BPM)", f"{results['tempo']:.0f}")
+            else: st.metric("Tempo (BPM)", "N/A")
+
+        if results['annotated_frames']:
+            st.subheader("🖼️ Sample Frames", divider=True)
+            cols = st.columns(min(5, len(results['annotated_frames'])))
+            for i, frame in enumerate(results['annotated_frames']):
+                with cols[i % len(cols)]:
+                    st.image(frame, caption=f"Frame {i+1}", use_container_width=True)
+
+        if results['transitions']:
+            st.subheader("🎬 Transition Analysis", divider=True)
+            transition_types = [t[1] for t in results['transitions']]
+            df = pd.DataFrame(transition_types, columns=["Transition"])
+            st.bar_chart(df["Transition"].value_counts())
+        else:
+            st.info("No significant transitions detected in this clip.")
+
+        st.subheader("🎵 Audio Profile", divider=True)
+        if results['tempo']:
+            mood = "Fast / Energetic" if results['tempo'] > 120 else "Moderate" if results['tempo'] > 90 else "Slow / Calm"
+            st.write(f"**Mood:** {mood} ({results['tempo']:.0f} BPM)")
+        st.write(f"**Dialogue Detected:** {'Yes' if results['is_speech'] else 'No clear speech detected.'}")
+
+        st.subheader("✏️ Editing Blueprint", divider=True)
+        recommendations = get_recommendations(results)
+        for rec in recommendations:
+            with st.expander(rec['feature'], expanded=True):
+                st.markdown("**Implementation Steps:**")
+                for step in rec['steps']:
+                    st.markdown(f"- {step}")
+                if rec['assets']:
+                    st.markdown(f"**Resources:** {rec['assets']}")
+                if rec['ai_prompt'] != "Not applicable":
+                    st.markdown(f"**Prompt:** `{rec['ai_prompt']}`")
+
+        report_text = f"VIDEO ANALYSIS REPORT\n{'='*40}\nDuration: {results['duration']:.1f}s\nFPS: {results['fps']:.2f}\nColor: {results['dominant_color']}\nCamera: {results['camera_motion']}\n\nTRANSITIONS:\n"
+        for _, ttype in results['transitions']:
+            report_text += f"- {ttype}\n"
+        report_text += "\nAUDIO:\n"
+        if results['tempo']:
+            report_text += f"Tempo: {results['tempo']:.0f} BPM\n"
+        if results['is_speech']:
+            report_text += "Speech detected.\n"
+        report_text += "\nRECOMMENDATIONS:\n"
+        for rec in recommendations:
+            report_text += f"\n### {rec['feature']}\n"
+            for step in rec['steps']:
+                report_text += f"- {step}\n"
+
+        st.download_button("📄 Export Report (.txt)", data=report_text, file_name="studio_report.txt", mime="text/plain")
+
+# ============================================================
+# TAB 2: LINK INSPECTOR
+# ============================================================
+with tab_inspect:
+    st.markdown("### 🔍 Inspect Any Video Link")
+    st.markdown("Paste a YouTube, Vimeo, or any supported video link below. We'll extract metadata and give you insights without downloading the video.")
+
+    link_url = st.text_input("Video URL", placeholder="https://www.youtube.com/watch?v=...", label_visibility="collapsed", key="link_input")
+
+    if st.button("🔍 Inspect Link", key="inspect_btn"):
+        if not link_url:
+            st.warning("Please paste a link first.")
+        else:
+            with st.spinner("Fetching metadata..."):
+                info, error = get_link_info(link_url)
+
+            if error:
+                st.error(f"Could not inspect this link: {error}")
+                st.info("💡 **Tip:** Some platforms (like YouTube) block metadata requests from cloud servers. In that case, please download the video and use the 'Local Analysis' tab.")
+            elif info:
+                st.success("✓ Metadata extracted successfully!")
+
+                col_thumb, col_info = st.columns([1, 2])
+                with col_thumb:
+                    if info['thumbnail']:
+                        st.image(info['thumbnail'], use_container_width=True)
+
+                with col_info:
+                    st.markdown(f"### {info['title']}")
+                    st.markdown(f"**Channel:** {info['uploader']}")
+                    duration_str = f"{int(info['duration'] // 60)}m {int(info['duration'] % 60)}s" if info['duration'] else "N/A"
+                    st.markdown(f"**Duration:** {duration_str}")
+                    st.markdown(f"**Views:** {info['view_count']:,}" if info['view_count'] else "**Views:** N/A")
+                    st.markdown(f"**Platform:** {info['extractor']}")
+
+                if info['description']:
+                    with st.expander("📝 Description"):
+                        st.write(info['description'])
+
+                st.divider()
+                st.markdown("### 💡 What to Look For in This Video")
+                st.markdown("""
+                Based on common editing patterns, here are the techniques you should observe when watching this video:
+
+                - **Color Grading:** Notice if the video uses a warm, cool, or cinematic tone. Look at the shadows vs. highlights.
+                - **Transitions:** Are they using hard cuts, fades, zooms, or slides between scenes?
+                - **Camera Motion:** Does the camera stay static, or is it panning, tilting, or moving with a gimbal?
+                - **Text Overlays:** Are there titles, subtitles, or kinetic typography? What fonts and animations?
+                - **Music & Audio:** Is the music fast, slow, or moderate? Is there a voiceover or dialogue?
+                - **Pacing:** How quickly does the video cut? Fast-paced or slow and deliberate?
+                """)
+
+                st.info("💡 To get a full automated analysis, download this video and upload it in the **Local Analysis** tab.")
+
+# ============================================================
+# TAB 3: STYLE LIBRARY
+# ============================================================
+with tab_styles:
+    st.markdown("### 🎨 Color Grading Style Library")
+    st.markdown("Explore popular video editing styles with step-by-step instructions for **CapCut** (free) and **DaVinci Resolve** (free).")
+
+    style_data = [
+        {
+            "name": "🎬 Teal & Orange (Hollywood Look)",
+            "desc": "The classic cinematic blockbuster look. Cool shadows + warm highlights. Used in almost every Hollywood action film.",
+            "best_for": "Action, Cinematic, Trailer",
+            "steps": "In CapCut: Filters → search 'Teal Orange' → apply at 70% strength.\nIn DaVinci: Color Wheels → Shadows to cyan-blue, Highlights to orange."
+        },
+        {
+            "name": "🌅 Warm Golden Hour",
+            "desc": "Golden sunset tones, cozy and inviting. Perfect for travel and lifestyle content.",
+            "best_for": "Travel, Vlog, Lifestyle",
+            "steps": "In CapCut: Adjust → Temperature +25, Tint +10, Saturation +10.\nAdd a subtle 'Sunburst' filter."
+        },
+        {
+            "name": "🌙 Cool Cinematic Blue",
+            "desc": "Moody, atmospheric, and dramatic. Great for sci-fi, thriller, or introspective content.",
+            "best_for": "Sci-Fi, Thriller, Drama",
+            "steps": "In CapCut: Adjust → Temperature -20, Contrast +15.\nFilters → search 'Cinematic Blue' or 'Moody'."
+        },
+        {
+            "name": "📜 Vintage / Sepia Film",
+            "desc": "Old-school film look with warm tones, grain, and faded blacks. Nostalgic and artistic.",
+            "best_for": "Nostalgia, Documentary, Artistic",
+            "steps": "In CapCut: Filters → 'Sepia' or 'Vintage'.\nAdd film grain overlay (search 'free film grain' on YouTube) with Screen blend mode at 30% opacity."
+        },
+        {
+            "name": "⬛ High Contrast B&W",
+            "desc": "Bold, dramatic, and timeless. Great for portraits, fashion, and dramatic storytelling.",
+            "best_for": "Portrait, Fashion, Drama",
+            "steps": "In CapCut: Adjust → Saturation 0, Contrast +40, Brightness -5."
+        },
+        {
+            "name": "🌈 Pastel Dreamy",
+            "desc": "Soft, airy, and whimsical. Popular in beauty, lifestyle, and romantic content.",
+            "best_for": "Beauty, Romance, Lifestyle",
+            "steps": "In CapCut: Filters → search 'Pastel' or 'Dreamy'.\nAdjust → Saturation +5, Contrast -10, Brightness +10."
+        },
+        {
+            "name": "⚡ Cyberpunk Neon",
+            "desc": "Vibrant purples, pinks, and blues. High saturation and glow effects. Futuristic and bold.",
+            "best_for": "Tech, Music Videos, Futuristic",
+            "steps": "In CapCut: Filters → 'Neon' or 'Cyberpunk'.\nAdd glow effect (Effects → 'Glow') at 40%."
+        },
+        {
+            "name": "🎞️ Film Emulation",
+            "desc": "Mimics the look of Kodak Portra, Fuji, or CineStill film stocks. Organic and analog feel.",
+            "best_for": "Portrait, Weddings, Artistic",
+            "steps": "In CapCut: Filters → 'Film' → try 'Kodak' or 'Fuji'.\nAdd subtle grain overlay at 20% opacity."
+        }
+    ]
+
+    for style in style_data:
+        st.markdown(f"""
+        <div class="style-card">
+            <div class="style-title">{style['name']}</div>
+            <div class="style-desc">{style['desc']}</div>
+            <div style="margin-top: 0.8rem;">
+                <span class="badge">Best for: {style['best_for']}</span>
+            </div>
+            <div style="margin-top: 0.8rem; font-size: 0.8rem; color: #CBD5E1; white-space: pre-line; line-height: 1.6;">
+                <strong style="color:#06B6D4;">How to:</strong>
+                {style['steps']}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ============================================================
+# TAB 4: RESOURCE HUB
+# ============================================================
+with tab_resources:
+    st.markdown("### 📚 Free Creator Resource Hub")
+    st.markdown("Handpicked, 100% free resources for every part of your video editing workflow.")
+
+    st.markdown("#### 🎵 Music & Audio")
+    st.markdown("""
+    <div class="resource-card">
+        <a href="https://www.youtube.com/audiolibrary" target="_blank">YouTube Audio Library</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Royalty-free music and sound effects from YouTube. Filter by mood, genre, and duration.</p>
+    </div>
+    <div class="resource-card">
+        <a href="https://pixabay.com/music/" target="_blank">Pixabay Music</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Free music with no attribution required. Huge library across all genres.</p>
+    </div>
+    <div class="resource-card">
+        <a href="https://freesound.org/" target="_blank">Freesound.org</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Massive collaborative database of Creative Commons licensed sound effects.</p>
+    </div>
+    <div class="resource-card">
+        <a href="https://www.zapsplat.com/" target="_blank">Zapsplat</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Over 100,000 free sound effects and music tracks.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### 🎨 Color LUTs & Grading")
+    st.markdown("""
+    <div class="resource-card">
+        <a href="https://www.freeluts.com/" target="_blank">FreeLUTs.com</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Hundreds of free LUTs for cinematic color grading.</p>
+    </div>
+    <div class="resource-card">
+        <a href="https://groundcontrol.film/" target="_blank">Ground Control</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Premium-quality free film emulation LUTs.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### 🎞️ Video Overlays & Stock")
+    st.markdown("""
+    <div class="resource-card">
+        <a href="https://www.pexels.com/videos/" target="_blank">Pexels Videos</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Free HD stock video footage, no attribution required.</p>
+    </div>
+    <div class="resource-card">
+        <a href="https://mixkit.co/free-stock-video/" target="_blank">Mixkit</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Free HD videos, music, sound effects, and templates.</p>
+    </div>
+    <div class="resource-card">
+        <a href="https://pixabay.com/videos/" target="_blank">Pixabay Videos</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Free stock videos and overlays.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### 🔤 Fonts & Typography")
+    st.markdown("""
+    <div class="resource-card">
+        <a href="https://fonts.google.com/" target="_blank">Google Fonts</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Over 1,500 free, open-source fonts for any project.</p>
+    </div>
+    <div class="resource-card">
+        <a href="https://www.dafont.com/" target="_blank">DaFont</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Thousands of free fonts including display and decorative.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### 🎙️ AI Voice & Narration")
+    st.markdown("""
+    <div class="resource-card">
+        <a href="https://elevenlabs.io/" target="_blank">ElevenLabs</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">Realistic AI voices for voiceovers. Free tier available.</p>
+    </div>
+    <div class="resource-card">
+        <a href="https://play.ht/" target="_blank">Play.ht</a>
+        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #94A3B8;">AI voice generator with multiple languages and accents.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ============================================================
+# CONTEXTUAL ASSISTANT
+# ============================================================
 st.divider()
-st.subheader("Contextual Assistant")
+st.subheader("🤖 Contextual Assistant")
+st.markdown("Ask about any editing technique — transitions, color grading, music, text, effects, and more.")
 user_question = st.chat_input("Ask about any editing technique...")
 if user_question:
-    with st.chat_message("user"): st.write(user_question)
+    with st.chat_message("user"):
+        st.write(user_question)
     with st.chat_message("assistant"):
         results = st.session_state.get('analysis_results', None)
         answer = answer_question(user_question, results)
         st.write(answer)
 
-# ---------- FOOTER ----------
+# ============================================================
+# FOOTER
+# ============================================================
 st.markdown("""
 <div class="footer">
     <span>◆ Studio Lens</span>
-    <div>Built for creators · v2.0</div>
+    <div>Built for creators · v3.0</div>
     <div style="color: #64748B;">Video Intelligence Engine</div>
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- DRONE MASCOT ----------
+# ============================================================
+# DRONE MASCOT
+# ============================================================
 st.markdown(f"""
 <div class="drone-mascot">
     <img src="{drone_src}" alt="AI Assistant" class="drone-img">
